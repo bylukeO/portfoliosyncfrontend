@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <defs>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#22D3EE"/>
+      <stop offset="100%" style="stop-color:#06B6D4"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <rect width="48" height="48" rx="12" fill="url(#logoGradient)" opacity="0.15"/>
+  
+  <!-- Sync icon - two curved arrows -->
+  <g stroke="url(#logoGradient)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- Center circle -->
+    <circle cx="24" cy="24" r="3" fill="url(#logoGradient)" stroke="none"/>
+    
+    <!-- Outer rotating elements -->
+    <path d="M24 10a14 14 0 0 1 12.12 7"/>
+    <path d="M38 17l-1.88-7h-7"/>
+    
+    <path d="M24 38a14 14 0 0 1-12.12-7"/>
+    <path d="M10 31l1.88 7h7"/>
+    
+    <!-- Connecting dots -->
+    <circle cx="24" cy="10" r="2" fill="url(#logoGradient)" stroke="none"/>
+    <circle cx="24" cy="38" r="2" fill="url(#logoGradient)" stroke="none"/>
+  </g>
+</svg>

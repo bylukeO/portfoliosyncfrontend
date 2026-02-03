@@ -1,0 +1,828 @@
+@import "tailwindcss";
+
+/* ============================================
+   PORTFOLIOSYNC - SYNTHWAVE TERMINAL DESIGN
+   ============================================
+   A retro-modern aesthetic blending 80s computing
+   nostalgia with contemporary design principles.
+   ============================================ */
+
+@theme {
+  /* Typography */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+
+  /* ----------------------------------------
+     SYNTHWAVE COLOR PALETTE
+     ---------------------------------------- */
+
+  /* Deep Background Colors */
+  --color-void: #0a0a0f;
+  --color-midnight: #1a1a2e;
+  --color-twilight: #16213e;
+  --color-deep-purple: #0f0f23;
+
+  /* Neon Accent Colors */
+  --color-hot-pink: #f72585;
+  --color-hot-pink-glow: rgba(247, 37, 133, 0.4);
+  --color-electric-cyan: #4cc9f0;
+  --color-electric-cyan-glow: rgba(76, 201, 240, 0.4);
+  --color-neon-purple: #b537f2;
+  --color-amber: #f9a825;
+  --color-amber-glow: rgba(249, 168, 37, 0.4);
+
+  /* Terminal/Retro Colors */
+  --color-terminal-green: #39ff14;
+  --color-terminal-green-glow: rgba(57, 255, 20, 0.4);
+  --color-crt-orange: #ff6b35;
+  --color-retro-blue: #00d4ff;
+
+  /* Text Colors */
+  --color-phosphor-white: #e8e8e8;
+  --color-crt-gray: #a0a0a0;
+  --color-dim-gray: #666666;
+  --color-ghost: #444455;
+
+  /* Semantic Colors */
+  --color-success: #39ff14;
+  --color-success-muted: rgba(57, 255, 20, 0.15);
+  --color-warning: #f9a825;
+  --color-warning-muted: rgba(249, 168, 37, 0.15);
+  --color-error: #ff3366;
+  --color-error-muted: rgba(255, 51, 102, 0.15);
+  --color-info: #4cc9f0;
+  --color-info-muted: rgba(76, 201, 240, 0.15);
+
+  /* Border Colors */
+  --color-border-retro: #2a2a4a;
+  --color-border-glow: #f72585;
+  --color-border-subtle: #1e1e3a;
+
+  /* ----------------------------------------
+     SPACING SCALE (4px base)
+     ---------------------------------------- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  /* ----------------------------------------
+     BORDER RADIUS - More angular for retro feel
+     ---------------------------------------- */
+  --radius-none: 0;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+
+  /* ----------------------------------------
+     RETRO SHADOWS - Chunky offset, no blur
+     ---------------------------------------- */
+  --shadow-retro-sm: 2px 2px 0 rgba(0, 0, 0, 0.8);
+  --shadow-retro-md: 4px 4px 0 rgba(0, 0, 0, 0.8);
+  --shadow-retro-lg: 6px 6px 0 rgba(0, 0, 0, 0.8);
+  --shadow-retro-pink: 4px 4px 0 rgba(247, 37, 133, 0.6);
+  --shadow-retro-cyan: 4px 4px 0 rgba(76, 201, 240, 0.6);
+  --shadow-neon-pink: 0 0 10px var(--color-hot-pink), 0 0 20px var(--color-hot-pink-glow);
+  --shadow-neon-cyan: 0 0 10px var(--color-electric-cyan), 0 0 20px var(--color-electric-cyan-glow);
+  --shadow-neon-green: 0 0 10px var(--color-terminal-green), 0 0 20px var(--color-terminal-green-glow);
+
+  /* ----------------------------------------
+     ANIMATION
+     ---------------------------------------- */
+  --ease-retro: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --duration-fast: 100ms;
+  --duration-normal: 200ms;
+  --duration-slow: 400ms;
+}
+
+/* ============================================
+   KEYFRAME ANIMATIONS
+   ============================================ */
+
+@keyframes scanline {
+  0% {
+    transform: translateY(-100%);
+  }
+
+  100% {
+    transform: translateY(100vh);
+  }
+}
+
+@keyframes crt-flicker {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  92% {
+    opacity: 1;
+  }
+
+  93% {
+    opacity: 0.85;
+  }
+
+  94% {
+    opacity: 1;
+  }
+
+  97% {
+    opacity: 0.9;
+  }
+
+  98% {
+    opacity: 1;
+  }
+}
+
+@keyframes glitch {
+
+  0%,
+  100% {
+    text-shadow: 2px 0 var(--color-hot-pink), -2px 0 var(--color-electric-cyan);
+    transform: translate(0);
+  }
+
+  20% {
+    text-shadow: -2px 0 var(--color-hot-pink), 2px 0 var(--color-electric-cyan);
+    transform: translate(-1px, 1px);
+  }
+
+  40% {
+    text-shadow: 2px 0 var(--color-hot-pink), -2px 0 var(--color-electric-cyan);
+    transform: translate(1px, -1px);
+  }
+
+  60% {
+    text-shadow: -1px 0 var(--color-hot-pink), 1px 0 var(--color-electric-cyan);
+    transform: translate(-1px, 0);
+  }
+
+  80% {
+    text-shadow: 1px 0 var(--color-hot-pink), -1px 0 var(--color-electric-cyan);
+    transform: translate(1px, 0);
+  }
+}
+
+@keyframes neon-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 5px currentColor, 0 0 10px currentColor, 0 0 15px currentColor;
+    filter: brightness(1);
+  }
+
+  50% {
+    box-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
+    filter: brightness(1.2);
+  }
+}
+
+@keyframes text-glow {
+
+  0%,
+  100% {
+    text-shadow: 0 0 4px currentColor, 0 0 8px currentColor;
+  }
+
+  50% {
+    text-shadow: 0 0 8px currentColor, 0 0 16px currentColor, 0 0 24px currentColor;
+  }
+}
+
+@keyframes terminal-blink {
+
+  0%,
+  50% {
+    opacity: 1;
+  }
+
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes pixel-noise {
+
+  0%,
+  100% {
+    background-position: 0 0;
+  }
+
+  10% {
+    background-position: -5% -10%;
+  }
+
+  20% {
+    background-position: -15% 5%;
+  }
+
+  30% {
+    background-position: 7% -25%;
+  }
+
+  40% {
+    background-position: 20% 25%;
+  }
+
+  50% {
+    background-position: -25% 10%;
+  }
+
+  60% {
+    background-position: 15% 5%;
+  }
+
+  70% {
+    background-position: 0% 15%;
+  }
+
+  80% {
+    background-position: 25% 35%;
+  }
+
+  90% {
+    background-position: -10% 10%;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shimmer-retro {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--color-hot-pink-glow);
+  }
+
+  50% {
+    box-shadow: 0 0 0 8px transparent;
+  }
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+
+html {
+  background-color: var(--color-void);
+  color: var(--color-crt-gray);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background:
+    radial-gradient(ellipse at top, rgba(26, 26, 46, 0.8) 0%, transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(247, 37, 133, 0.05) 0%, transparent 40%),
+    radial-gradient(ellipse at bottom left, rgba(76, 201, 240, 0.05) 0%, transparent 40%),
+    var(--color-void);
+  min-height: 100vh;
+}
+
+/* ============================================
+   SCANLINE OVERLAY
+   ============================================ */
+
+.scanlines {
+  position: relative;
+}
+
+.scanlines::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg,
+      rgba(0, 0, 0, 0.1),
+      rgba(0, 0, 0, 0.1) 1px,
+      transparent 1px,
+      transparent 2px);
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* Animated scan beam */
+.scan-beam::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(180deg,
+      transparent,
+      rgba(76, 201, 240, 0.3),
+      transparent);
+  animation: scanline 8s linear infinite;
+  pointer-events: none;
+}
+
+/* ============================================
+   NOISE TEXTURE
+   ============================================ */
+
+.noise {
+  position: relative;
+}
+
+.noise::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* ============================================
+   SCROLLBAR STYLING - Retro themed
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-midnight);
+  border-left: 1px solid var(--color-border-retro);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-retro);
+  border: 1px solid var(--color-hot-pink);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-hot-pink);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-retro) var(--color-midnight);
+}
+
+/* ============================================
+   SELECTION STYLING
+   ============================================ */
+
+::selection {
+  background-color: rgba(247, 37, 133, 0.4);
+  color: var(--color-phosphor-white);
+}
+
+/* ============================================
+   FOCUS STYLES
+   ============================================ */
+
+:focus-visible {
+  outline: 2px solid var(--color-hot-pink);
+  outline-offset: 2px;
+  box-shadow: var(--shadow-neon-pink);
+}
+
+/* ============================================
+   RETRO UTILITY CLASSES
+   ============================================ */
+
+/* Text effects */
+.text-gradient-synthwave {
+  background: linear-gradient(90deg, var(--color-hot-pink), var(--color-electric-cyan), var(--color-neon-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-glow-pink {
+  text-shadow: 0 0 10px var(--color-hot-pink), 0 0 20px var(--color-hot-pink-glow);
+}
+
+.text-glow-cyan {
+  text-shadow: 0 0 10px var(--color-electric-cyan), 0 0 20px var(--color-electric-cyan-glow);
+}
+
+.text-glow-green {
+  text-shadow: 0 0 10px var(--color-terminal-green), 0 0 20px var(--color-terminal-green-glow);
+}
+
+.glitch-text {
+  animation: glitch 3s infinite;
+}
+
+.glitch-text:hover {
+  animation: glitch 0.3s infinite;
+}
+
+/* Retro panel styling */
+.retro-panel {
+  background: var(--color-midnight);
+  border: 3px solid var(--color-border-retro);
+  box-shadow: var(--shadow-retro-md);
+  position: relative;
+}
+
+.retro-panel::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-hot-pink), var(--color-electric-cyan));
+}
+
+/* Corner decorations */
+.pixel-corners {
+  position: relative;
+}
+
+.pixel-corners::before,
+.pixel-corners::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--color-hot-pink);
+}
+
+.pixel-corners::before {
+  top: -4px;
+  left: -4px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.pixel-corners::after {
+  bottom: -4px;
+  right: -4px;
+  border-left: none;
+  border-top: none;
+}
+
+/* Neon glow effects */
+.neon-pink {
+  box-shadow: var(--shadow-neon-pink);
+}
+
+.neon-cyan {
+  box-shadow: var(--shadow-neon-cyan);
+}
+
+.neon-green {
+  box-shadow: var(--shadow-neon-green);
+}
+
+.neon-pulse {
+  animation: neon-pulse 2s ease-in-out infinite;
+}
+
+/* CRT effect */
+.crt-flicker {
+  animation: crt-flicker 4s infinite;
+}
+
+/* Terminal cursor */
+.terminal-cursor::after {
+  content: '▋';
+  animation: terminal-blink 1s step-end infinite;
+  color: var(--color-terminal-green);
+  margin-left: 2px;
+}
+
+/* Grid pattern background */
+.grid-pattern {
+  background-image:
+    linear-gradient(var(--color-border-retro) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-border-retro) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Skeleton loading - retro style */
+.skeleton-retro {
+  background: linear-gradient(90deg,
+      var(--color-midnight) 25%,
+      var(--color-twilight) 50%,
+      var(--color-midnight) 75%);
+  background-size: 200% 100%;
+  animation: shimmer-retro 1.5s infinite;
+}
+
+/* ============================================
+   COMPONENT BASE STYLES
+   ============================================ */
+
+/* Retro Card */
+.card-retro {
+  background: var(--color-midnight);
+  border: 3px solid var(--color-border-retro);
+  box-shadow: var(--shadow-retro-md);
+  padding: var(--space-6);
+  position: relative;
+  transition: all var(--duration-fast) var(--ease-retro);
+}
+
+.card-retro:hover {
+  border-color: var(--color-hot-pink);
+  box-shadow: var(--shadow-retro-pink);
+  transform: translate(-2px, -2px);
+}
+
+.card-retro-accent {
+  background: var(--color-midnight);
+  border: 3px solid var(--color-hot-pink);
+  box-shadow: var(--shadow-retro-pink), var(--shadow-neon-pink);
+}
+
+/* Retro Button */
+.btn-retro {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 3px solid;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-retro);
+  position: relative;
+}
+
+.btn-retro:active {
+  transform: translate(2px, 2px);
+  box-shadow: none !important;
+}
+
+.btn-retro:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Primary button - Hot pink */
+.btn-primary-retro {
+  background: var(--color-hot-pink);
+  border-color: var(--color-hot-pink);
+  color: white;
+  box-shadow: var(--shadow-retro-md);
+}
+
+.btn-primary-retro:hover:not(:disabled) {
+  box-shadow: var(--shadow-retro-md), var(--shadow-neon-pink);
+  filter: brightness(1.1);
+}
+
+/* Secondary button */
+.btn-secondary-retro {
+  background: transparent;
+  border-color: var(--color-electric-cyan);
+  color: var(--color-electric-cyan);
+  box-shadow: var(--shadow-retro-sm);
+}
+
+.btn-secondary-retro:hover:not(:disabled) {
+  background: var(--color-electric-cyan);
+  color: var(--color-void);
+  box-shadow: var(--shadow-retro-sm), var(--shadow-neon-cyan);
+}
+
+/* Ghost button */
+.btn-ghost-retro {
+  background: transparent;
+  border-color: var(--color-border-retro);
+  color: var(--color-crt-gray);
+}
+
+.btn-ghost-retro:hover:not(:disabled) {
+  border-color: var(--color-phosphor-white);
+  color: var(--color-phosphor-white);
+}
+
+/* Danger button */
+.btn-danger-retro {
+  background: transparent;
+  border-color: var(--color-error);
+  color: var(--color-error);
+  box-shadow: var(--shadow-retro-sm);
+}
+
+.btn-danger-retro:hover:not(:disabled) {
+  background: var(--color-error);
+  color: white;
+  box-shadow: 0 0 10px var(--color-error), 0 0 20px rgba(255, 51, 102, 0.4);
+}
+
+/* Retro Input */
+.input-retro {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-deep-purple);
+  border: 2px solid var(--color-border-retro);
+  color: var(--color-phosphor-white);
+  font-size: 0.875rem;
+  transition: all var(--duration-fast) var(--ease-retro);
+}
+
+.input-retro::placeholder {
+  color: var(--color-dim-gray);
+  font-style: italic;
+}
+
+.input-retro:focus {
+  outline: none;
+  border-color: var(--color-electric-cyan);
+  box-shadow: var(--shadow-neon-cyan);
+}
+
+.input-retro.error {
+  border-color: var(--color-error);
+  box-shadow: 0 0 10px rgba(255, 51, 102, 0.3);
+}
+
+/* Retro Badge */
+.badge-retro {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border: 2px solid;
+}
+
+.badge-success-retro {
+  background: var(--color-success-muted);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.badge-warning-retro {
+  background: var(--color-warning-muted);
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}
+
+.badge-error-retro {
+  background: var(--color-error-muted);
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.badge-info-retro {
+  background: var(--color-info-muted);
+  border-color: var(--color-info);
+  color: var(--color-info);
+}
+
+.badge-neutral-retro {
+  background: rgba(100, 100, 100, 0.1);
+  border-color: var(--color-dim-gray);
+  color: var(--color-crt-gray);
+}
+
+/* ============================================
+   DIFF HIGHLIGHTING
+   ============================================ */
+
+.diff-add {
+  background: var(--color-success-muted);
+  border-left: 3px solid var(--color-success);
+}
+
+.diff-remove {
+  background: var(--color-error-muted);
+  border-left: 3px solid var(--color-error);
+}
+
+.diff-modify {
+  background: var(--color-warning-muted);
+  border-left: 3px solid var(--color-warning);
+}
+
+/* ============================================
+   RETRO NAVIGATION
+   ============================================ */
+
+.nav-item-retro {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-crt-gray);
+  border: 2px solid transparent;
+  transition: all var(--duration-fast) var(--ease-retro);
+  position: relative;
+}
+
+.nav-item-retro:hover {
+  color: var(--color-phosphor-white);
+  background: var(--color-twilight);
+}
+
+.nav-item-retro.active {
+  color: var(--color-hot-pink);
+  background: rgba(247, 37, 133, 0.1);
+  border-color: var(--color-hot-pink);
+}
+
+.nav-item-retro.active::before {
+  content: '▶';
+  position: absolute;
+  left: -12px;
+  font-size: 8px;
+  color: var(--color-hot-pink);
+  animation: terminal-blink 1s step-end infinite;
+}
+
+/* ============================================
+   DECORATIVE ELEMENTS
+   ============================================ */
+
+/* Retro divider */
+.divider-retro {
+  height: 2px;
+  background: linear-gradient(90deg,
+      transparent,
+      var(--color-border-retro) 20%,
+      var(--color-hot-pink) 50%,
+      var(--color-border-retro) 80%,
+      transparent);
+  margin: var(--space-6) 0;
+}
+
+/* Section header */
+.section-header-retro {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--color-dim-gray);
+  padding-bottom: var(--space-2);
+  border-bottom: 2px solid var(--color-border-retro);
+  margin-bottom: var(--space-4);
+}
+
+.section-header-retro::before {
+  content: '// ';
+  color: var(--color-hot-pink);
+}
+
+/* Status indicator */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border: 2px solid currentColor;
+  animation: neon-pulse 2s ease-in-out infinite;
+}

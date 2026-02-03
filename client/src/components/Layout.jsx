@@ -1,0 +1,135 @@
+import { NavLink, Outlet } from 'react-router-dom';
+
+const navItems = [
+  { to: '/', label: 'Dashboard', icon: DashboardIcon },
+  { to: '/settings', label: 'Settings', icon: SettingsIcon },
+  { to: '/brand', label: 'Brand Guide', icon: PaletteIcon },
+];
+
+function DashboardIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="square" strokeLinejoin="miter" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+    </svg>
+  );
+}
+
+function SettingsIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="square" strokeLinejoin="miter" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
+      <path strokeLinecap="square" strokeLinejoin="miter" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  );
+}
+
+function PaletteIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="square" strokeLinejoin="miter" d="M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402M6.75 21A3.75 3.75 0 013 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 003.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.879 2.88M6.75 17.25h.008v.008H6.75v-.008z" />
+    </svg>
+  );
+}
+
+function SyncIcon() {
+  return (
+    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="square" strokeLinejoin="miter" d="M4.5 12a7.5 7.5 0 0015 0m-15 0a7.5 7.5 0 1115 0m-15 0H3m16.5 0H21m-1.5 0H12m-8.457 3.077l1.41-.513m14.095-5.13l1.41-.513M5.106 17.785l1.15-.964m11.49-9.642l1.149-.964M7.501 19.795l.75-1.3m7.5-12.99l.75-1.3m-6.063 16.658l.26-1.477m2.605-14.772l.26-1.477m0 17.726l-.26-1.477M10.698 4.614l-.26-1.477M16.5 19.794l-.75-1.299M7.5 4.205L6.75 2.906M12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
+    </svg>
+  );
+}
+
+export default function Layout() {
+  return (
+    <div className="flex h-screen overflow-hidden">
+      {/* Sidebar */}
+      <aside className="w-64 bg-[#1a1a2e] border-r-3 border-[#2a2a4a] flex flex-col relative">
+        {/* Scanline overlay */}
+        <div className="absolute inset-0 pointer-events-none opacity-30 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,0,0,0.3)_2px,rgba(0,0,0,0.3)_4px)]" />
+
+        {/* Top accent line */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#f72585] via-[#4cc9f0] to-[#f72585]" />
+
+        {/* Logo area */}
+        <div className="p-6 relative">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 border-2 border-[#f72585] bg-[#0a0a0f] flex items-center justify-center shadow-[0_0_10px_rgba(247,37,133,0.4)]">
+              <span className="text-[#f72585]">
+                <SyncIcon />
+              </span>
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-[#e8e8e8] tracking-wide">
+                Portfolio<span className="text-[#f72585]">Sync</span>
+              </h1>
+              <div className="text-[10px] text-[#666666] uppercase tracking-widest">
+                // system v1.0
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* System status indicator */}
+        <div className="mx-4 mb-4 px-3 py-2 bg-[#0a0a0f] border border-[#2a2a4a]">
+          <div className="flex items-center gap-2 text-xs">
+            <span className="w-2 h-2 bg-[#39ff14] animate-pulse shadow-[0_0_6px_rgba(57,255,20,0.6)]" />
+            <span className="text-[#39ff14] font-mono uppercase tracking-wider">System Online</span>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 px-3 space-y-1 relative">
+          <div className="text-[10px] text-[#666666] uppercase tracking-widest mb-3 px-3">
+            // Navigation
+          </div>
+          {navItems.map(({ to, label, icon: Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={to === '/'}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-3 text-sm font-medium transition-all duration-100 border-2 relative
+                ${isActive
+                  ? 'bg-[rgba(247,37,133,0.1)] text-[#f72585] border-[#f72585] shadow-[0_0_10px_rgba(247,37,133,0.2)]'
+                  : 'text-[#a0a0a0] border-transparent hover:text-[#e8e8e8] hover:bg-[#16213e] hover:border-[#2a2a4a]'
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <span className="absolute -left-3 text-[#f72585] text-xs animate-pulse">▶</span>
+                  )}
+                  <Icon />
+                  <span className="uppercase tracking-wide">{label}</span>
+                </>
+              )}
+            </NavLink>
+          ))}
+        </nav>
+
+        {/* Footer */}
+        <div className="p-4 border-t-2 border-[#2a2a4a] relative">
+          <div className="flex items-center justify-between">
+            <div className="text-[10px] text-[#666666] font-mono">
+              <span className="text-[#f72585]">$</span> portfoliosync --version
+            </div>
+            <div className="text-[10px] text-[#4cc9f0] font-mono">v1.0.0</div>
+          </div>
+          <div className="mt-2 text-[10px] text-[#444455]">
+            © 2026 // All systems nominal
+          </div>
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <main className="flex-1 overflow-y-auto relative">
+        {/* Subtle grid pattern */}
+        <div className="absolute inset-0 pointer-events-none opacity-5 bg-[linear-gradient(#2a2a4a_1px,transparent_1px),linear-gradient(90deg,#2a2a4a_1px,transparent_1px)] bg-[size:50px_50px]" />
+        <div className="relative">
+          <Outlet />
+        </div>
+      </main>
+    </div>
+  );
+}
