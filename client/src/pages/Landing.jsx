@@ -276,7 +276,7 @@ export default function Landing() {
             <footer className="border-t-2 border-[#2a2a4a] bg-[#0f0f23] py-12 px-6 relative z-10">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 border-2 border-[#f72585] bg-[#0a0a0f] flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-lg md:rounded-none border border-[#f72585] md:border-2 bg-[#0a0a0f] flex items-center justify-center shadow-[0_0_10px_rgba(247,37,133,0.4)]">
                             <span className="text-[#f72585]">
                                 <SyncIcon className="w-4 h-4" />
                             </span>
@@ -286,7 +286,7 @@ export default function Landing() {
                         </div>
                     </div>
 
-                    <div className="flex gap-8 text-sm font-bold uppercase tracking-widest text-[#a0a0a0]">
+                    <div className="flex flex-wrap justify-center gap-4 md:gap-8 text-sm font-bold uppercase tracking-widest text-[#a0a0a0]">
                         <a href="#" className="hover:text-[#f72585] transition-colors">Features</a>
                         <a href="#" className="hover:text-[#f72585] transition-colors">Pricing</a>
                         <a href="#" className="hover:text-[#f72585] transition-colors">Documentation</a>
