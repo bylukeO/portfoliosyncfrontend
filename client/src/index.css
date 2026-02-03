@@ -92,6 +92,10 @@
   --shadow-neon-cyan: 0 0 10px var(--color-electric-cyan), 0 0 20px var(--color-electric-cyan-glow);
   --shadow-neon-green: 0 0 10px var(--color-terminal-green), 0 0 20px var(--color-terminal-green-glow);
 
+  /* Sleek Modern Shadows (Soft, Diffuse) */
+  --shadow-sleek-blue: 0 10px 40px -10px rgba(76, 201, 240, 0.5);
+  --shadow-sleek-pink: 0 10px 40px -10px rgba(247, 37, 133, 0.5);
+
   /* ----------------------------------------
      ANIMATION
      ---------------------------------------- */
@@ -825,4 +829,43 @@ body {
   height: 8px;
   border: 2px solid currentColor;
   animation: neon-pulse 2s ease-in-out infinite;
+}
+
+/* ============================================
+   SLEEK MODERN UTILITIES (Mobile Optimization)
+   ============================================ */
+
+.glass-panel {
+  background: rgba(26, 26, 46, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.gradient-border-mask {
+  position: relative;
+  background: padding-box linear-gradient(var(--color-midnight), var(--color-midnight)),
+    border-box linear-gradient(135deg, var(--color-hot-pink), var(--color-electric-cyan));
+  border: 2px solid transparent;
+  border-radius: var(--radius-xl);
+}
+
+.card-sleek {
+  background: linear-gradient(180deg, rgba(26, 26, 46, 0.8) 0%, rgba(15, 15, 35, 0.9) 100%);
+  border: 1px solid rgba(76, 201, 240, 0.2);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 0 20px rgba(76, 201, 240, 0.05);
+  transition: all 0.3s ease;
+}
+
+.card-sleek:hover {
+  border-color: rgba(76, 201, 240, 0.5);
+  box-shadow: 0 0 30px rgba(76, 201, 240, 0.15);
+}
+
+.text-gradient-sleek {
+  background: linear-gradient(135deg, #fff 0%, #a0a0a0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }

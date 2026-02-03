@@ -78,6 +78,7 @@ export default function Button({
         transition-all duration-100
         disabled:opacity-50 disabled:cursor-not-allowed
         active:translate-x-0.5 active:translate-y-0.5 active:shadow-none
+        rounded-lg md:rounded-none
     `;
 
     return (
