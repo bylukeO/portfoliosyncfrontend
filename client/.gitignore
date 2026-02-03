@@ -25,3 +25,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Task & Reference Files
+# Ignore all markdown files
+*.md
+!README.md
