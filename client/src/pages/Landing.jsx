@@ -75,8 +75,8 @@ export default function Landing() {
             </div>
 
             {/* Navigation */}
-            <nav className="absolute top-0 left-0 right-0 z-50 px-6 py-6 flex items-center justify-between max-w-7xl mx-auto">
-                <div className="flex items-center gap-3">
+            <nav className="absolute top-0 left-0 right-0 z-50 px-4 md:px-6 py-4 md:py-6 flex items-center justify-between max-w-7xl mx-auto">
+                <div className="flex items-center gap-2 md:gap-3">
                     <div className="w-10 h-10 border-2 border-[#f72585] bg-[#0a0a0f] flex items-center justify-center shadow-[0_0_10px_rgba(247,37,133,0.4)]">
                         <span className="text-[#f72585]">
                             <SyncIcon className="w-5 h-5" />
@@ -86,9 +86,9 @@ export default function Landing() {
                         PORTFOLIO<span className="text-[#f72585]">SYNC</span>
                     </span>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 md:gap-4">
                     <Link to="/login">
-                        <Button variant="ghost" className="hidden sm:inline-flex">LOGIN</Button>
+                        <Button variant="ghost" className="inline-flex">LOGIN</Button>
                     </Link>
                     <Link to="/register">
                         <Button variant="primary" glow>START FREE</Button>
@@ -97,7 +97,7 @@ export default function Landing() {
             </nav>
 
             {/* Hero Section */}
-            <section className="relative pt-32 pb-20 px-6 z-10 min-h-screen flex flex-col justify-center">
+            <section className="relative pt-24 md:pt-32 pb-20 px-6 z-10 min-h-screen flex flex-col justify-center">
                 <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 items-center">
                     <div>
                         <div className="inline-flex items-center gap-2 mb-6 px-3 py-1 bg-[rgba(76,201,240,0.1)] border border-[#4cc9f0] text-[#4cc9f0] text-[10px] font-bold uppercase tracking-widest shadow-[0_0_10px_rgba(76,201,240,0.2)]">
@@ -105,7 +105,7 @@ export default function Landing() {
                             <span>System Online v1.0</span>
                         </div>
 
-                        <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight text-[#e8e8e8] uppercase tracking-wide glitch-text">
+                        <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold mb-6 leading-tight text-[#e8e8e8] uppercase tracking-wide glitch-text">
                             Keep Your <br />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#f72585] via-[#b537f2] to-[#4cc9f0]">
                                 Portfolio
@@ -181,7 +181,7 @@ export default function Landing() {
             </section>
 
             {/* Features Section */}
-            <section id="features" className="py-24 px-6 relative z-10 bg-[#0f0f23]/50">
+            <section id="features" className="py-16 md:py-24 px-4 md:px-6 relative z-10 bg-[#0f0f23]/50">
                 <div className="max-w-7xl mx-auto">
                     <SectionHeader
                         title="CAPABILITIES"
@@ -218,7 +218,7 @@ export default function Landing() {
             </section>
 
             {/* How It Works Section */}
-            <section className="py-24 px-6 relative z-10">
+            <section className="py-16 md:py-24 px-4 md:px-6 relative z-10">
                 <div className="max-w-7xl mx-auto">
                     <SectionHeader
                         title="PROTOCOL"
@@ -251,9 +251,9 @@ export default function Landing() {
             </section>
 
             {/* CTA Section */}
-            <section className="py-32 px-6 relative z-10">
+            <section className="py-20 md:py-32 px-4 md:px-6 relative z-10">
                 <div className="max-w-4xl mx-auto text-center">
-                    <div className="relative bg-[#1a1a2e] border-4 border-[#f72585] p-12 shadow-[0_0_50px_rgba(247,37,133,0.2)] overflow-hidden group hover:shadow-[0_0_80px_rgba(247,37,133,0.4)] transition-all duration-500">
+                    <div className="relative gradient-border-mask md:bg-[#1a1a2e] md:border-4 md:border-[#f72585] p-8 md:p-12 shadow-[0_0_30px_rgba(247,37,133,0.15)] md:shadow-[0_0_50px_rgba(247,37,133,0.2)] overflow-hidden group hover:shadow-[0_0_50px_rgba(247,37,133,0.3)] md:hover:shadow-[0_0_80px_rgba(247,37,133,0.4)] transition-all duration-500 rounded-2xl md:rounded-none">
                         {/* Background gradient */}
                         <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent,rgba(247,37,133,0.05),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-700 transform translate-x-[-100%] group-hover:translate-x-[100%]" />
 
@@ -301,16 +301,16 @@ export default function Landing() {
 // Sub-components
 function FeatureCard({ icon, title, description, color }) {
     return (
-        <div className="bg-[#1a1a2e] border-3 border-[#2a2a4a] p-8 hover:border-[#e8e8e8] transition-all duration-300 group hover:-translate-y-2 hover:shadow-[8px_8px_0_rgba(0,0,0,0.5)]">
+        <div className="card-sleek md:card-retro p-6 md:p-8 group hover:-translate-y-2">
             <div
-                className="w-16 h-16 flex items-center justify-center mb-6 bg-[#0a0a0f] border-2 transition-colors duration-300"
-                style={{ borderColor: color }}
+                className="w-14 h-14 md:w-16 md:h-16 flex items-center justify-center mb-6 bg-[#0a0a0f] rounded-lg md:rounded-none border border-[#2a2a4a] md:border-2 transition-all duration-300 shadow-[0_0_15px_rgba(0,0,0,0.5)] group-hover:shadow-[0_0_20px_rgba(0,0,0,0.6)]"
+                style={{ borderColor: 'rgba(255,255,255,0.1)' }}
             >
-                <div className="text-white group-hover:scale-110 transition-transform duration-300" style={{ color }}>
+                <div className="text-white group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" style={{ color }}>
                     {icon}
                 </div>
             </div>
-            <h3 className="text-xl font-bold text-[#e8e8e8] uppercase mb-3 tracking-wide">{title}</h3>
+            <h3 className="text-lg md:text-xl font-bold text-[#e8e8e8] uppercase mb-3 tracking-wide">{title}</h3>
             <p className="text-[#a0a0a0] leading-relaxed text-sm">{description}</p>
         </div>
     );
