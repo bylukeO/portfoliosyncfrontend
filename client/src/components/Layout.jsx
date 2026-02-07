@@ -1,15 +1,25 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useState } from 'react';
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: DashboardIcon },
+  { to: '/dashboard', label: 'Dashboard', icon: DashboardIcon },
+  { to: '/activity', label: 'Activity Log', icon: ActivityIcon },
   { to: '/settings', label: 'Settings', icon: SettingsIcon },
-  { to: '/brand', label: 'Brand Guide', icon: PaletteIcon },
 ];
 
 function DashboardIcon() {
   return (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="square" strokeLinejoin="miter" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+    </svg>
+  );
+}
+
+function ActivityIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="square" strokeLinejoin="miter" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
   );
 }
@@ -23,14 +33,6 @@ function SettingsIcon() {
   );
 }
 
-function PaletteIcon() {
-  return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-      <path strokeLinecap="square" strokeLinejoin="miter" d="M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402M6.75 21A3.75 3.75 0 013 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 003.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.879 2.88M6.75 17.25h.008v.008H6.75v-.008z" />
-    </svg>
-  );
-}
-
 function SyncIcon() {
   return (
     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -39,7 +41,26 @@ function SyncIcon() {
   );
 }
 
+function LogoutIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="square" strokeLinejoin="miter" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+    </svg>
+  );
+}
+
 export default function Layout() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    await logout();
+    navigate('/');
+  };
+
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Sidebar */}
@@ -69,6 +90,64 @@ export default function Layout() {
           </div>
         </div>
 
+        {/* User profile section */}
+        {user && (
+          <div className="mx-4 mb-4 relative">
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="w-full px-3 py-3 bg-[#0a0a0f] border-2 border-[#2a2a4a] hover:border-[#4cc9f0] transition-all group"
+            >
+              <div className="flex items-center gap-3">
+                <img
+                  src={user.avatarUrl}
+                  alt={user.displayName}
+                  className="w-8 h-8 border border-[#f72585] bg-[#1a1a2e]"
+                />
+                <div className="flex-1 text-left">
+                  <div className="text-sm font-medium text-[#e8e8e8] truncate">
+                    {user.displayName}
+                  </div>
+                  <div className="text-[10px] text-[#4cc9f0] font-mono truncate">
+                    @{user.githubUsername}
+                  </div>
+                </div>
+                <svg
+                  className={`w-4 h-4 text-[#666666] transition-transform ${showUserMenu ? 'rotate-180' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="square" strokeLinejoin="miter" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </button>
+
+            {/* User dropdown menu */}
+            {showUserMenu && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-[#0a0a0f] border-2 border-[#2a2a4a] z-50">
+                <button
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="w-full flex items-center gap-3 px-3 py-3 text-sm text-[#ff3366] hover:bg-[rgba(255,51,102,0.1)] transition-all disabled:opacity-50"
+                >
+                  {isLoggingOut ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-current border-t-transparent animate-spin" />
+                      <span className="uppercase tracking-wide">Signing out...</span>
+                    </>
+                  ) : (
+                    <>
+                      <LogoutIcon />
+                      <span className="uppercase tracking-wide">Sign Out</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* System status indicator */}
         <div className="mx-4 mb-4 px-3 py-2 bg-[#0a0a0f] border border-[#2a2a4a]">
           <div className="flex items-center gap-2 text-xs">
@@ -86,7 +165,6 @@ export default function Layout() {
             <NavLink
               key={to}
               to={to}
-              end={to === '/'}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-3 text-sm font-medium transition-all duration-100 border-2 relative
                 ${isActive
@@ -130,6 +208,14 @@ export default function Layout() {
           <Outlet />
         </div>
       </main>
+
+      {/* Click outside to close user menu */}
+      {showUserMenu && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setShowUserMenu(false)}
+        />
+      )}
     </div>
   );
 }

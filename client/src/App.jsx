@@ -1,32 +1,47 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { ToastProvider } from './components/Toast';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Settings from './pages/Settings';
 import ScanDetail from './pages/ScanDetail';
-import BrandPreview from './pages/BrandPreview';
+import ActivityLog from './pages/ActivityLog';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
-import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
+import AuthCallback from './pages/AuthCallback';
+import AuthError from './pages/AuthError';
 
 function App() {
   return (
-    <ToastProvider>
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
+    <AuthProvider>
+      <ToastProvider>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/auth/error" element={<AuthError />} />
 
-        <Route element={<Layout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/scan/:id" element={<ScanDetail />} />
-          <Route path="/brand" element={<BrandPreview />} />
-        </Route>
-      </Routes>
-    </ToastProvider>
+          {/* Protected routes */}
+          <Route
+            element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/scan/:id" element={<ScanDetail />} />
+            <Route path="/activity" element={<ActivityLog />} />
+          </Route>
+
+          {/* Catch all - redirect to dashboard (which will redirect to login if not authenticated) */}
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </ToastProvider>
+    </AuthProvider>
   );
 }
 

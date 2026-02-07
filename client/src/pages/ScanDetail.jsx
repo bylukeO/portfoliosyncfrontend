@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import api from '../api';
+import api from '../services/api';
 import { useToast } from '../components/Toast';
 
 export default function ScanDetail() {

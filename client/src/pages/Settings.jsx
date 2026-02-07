@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import api from '../api';
+import api from '../services/api';
 import { useToast } from '../components/Toast';
 
 export default function Settings() {
@@ -257,11 +257,10 @@ export default function Settings() {
             <button
               key={opt}
               onClick={() => setFrequency(opt)}
-              className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                frequency === opt
+              className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${frequency === opt
                   ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30'
                   : 'bg-slate-900/50 text-slate-400 border border-slate-700 hover:border-slate-600'
-              }`}
+                }`}
             >
               {opt.charAt(0).toUpperCase() + opt.slice(1)}
             </button>
