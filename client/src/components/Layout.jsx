@@ -1,12 +1,26 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import { useState } from 'react';
+import { NavLink, Outlet } from 'react-router-dom';
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: DashboardIcon },
-  { to: '/activity', label: 'Activity Log', icon: ActivityIcon },
   { to: '/settings', label: 'Settings', icon: SettingsIcon },
 ];
+
+function MenuIcon() {
+  return (
+    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="square" strokeLinejoin="miter" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="square" strokeLinejoin="miter" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  );
+}
 
 function DashboardIcon() {
   return (
@@ -50,21 +64,55 @@ function LogoutIcon() {
 }
 
 export default function Layout() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
-
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    await logout();
-    navigate('/');
-  };
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-[#0a0a0f]">
+      {/* Mobile Top Bar */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#1a1a2e] border-b-2 border-[#2a2a4a] flex items-center justify-between px-4 z-40">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 border border-[#f72585] bg-[#0a0a0f] flex items-center justify-center">
+            <span className="text-[#f72585]">
+              <SyncIcon />
+            </span>
+          </div>
+          <span className="font-bold text-[#e8e8e8] tracking-wide">
+            Portfolio<span className="text-[#f72585]">Sync</span>
+          </span>
+        </div>
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="text-[#e8e8e8] p-2 hover:bg-[#2a2a4a] rounded-md transition-colors"
+        >
+          <MenuIcon />
+        </button>
+      </div>
+
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-[#1a1a2e] border-r-3 border-[#2a2a4a] flex flex-col relative">
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#1a1a2e] border-r-3 border-[#2a2a4a] flex flex-col transition-transform duration-300 transform 
+          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
+          md:relative md:translate-x-0`
+        }
+      >
+        {/* Mobile Close Button */}
+        <div className="md:hidden absolute top-4 right-4 z-50">
+          <button
+            onClick={() => setIsSidebarOpen(false)}
+            className="text-[#a0a0a0] hover:text-[#f72585]"
+          >
+            <CloseIcon />
+          </button>
+        </div>
+
         {/* Scanline overlay */}
         <div className="absolute inset-0 pointer-events-none opacity-30 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,0,0,0.3)_2px,rgba(0,0,0,0.3)_4px)]" />
 
@@ -72,7 +120,7 @@ export default function Layout() {
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#f72585] via-[#4cc9f0] to-[#f72585]" />
 
         {/* Logo area */}
-        <div className="p-6 relative">
+        <div className="p-6 relative mt-8 md:mt-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 border-2 border-[#f72585] bg-[#0a0a0f] flex items-center justify-center shadow-[0_0_10px_rgba(247,37,133,0.4)]">
               <span className="text-[#f72585]">
@@ -165,6 +213,7 @@ export default function Layout() {
             <NavLink
               key={to}
               to={to}
+              onClick={() => setIsSidebarOpen(false)}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-3 text-sm font-medium transition-all duration-100 border-2 relative
                 ${isActive
@@ -201,7 +250,7 @@ export default function Layout() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto relative">
+      <main className="flex-1 overflow-y-auto relative pt-16 md:pt-0">
         {/* Subtle grid pattern */}
         <div className="absolute inset-0 pointer-events-none opacity-5 bg-[linear-gradient(#2a2a4a_1px,transparent_1px),linear-gradient(90deg,#2a2a4a_1px,transparent_1px)] bg-[size:50px_50px]" />
         <div className="relative">
