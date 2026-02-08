@@ -4,7 +4,6 @@ import { NavLink, Outlet } from 'react-router-dom';
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: DashboardIcon },
   { to: '/settings', label: 'Settings', icon: SettingsIcon },
-  { to: '/brand', label: 'Brand Guide', icon: PaletteIcon },
 ];
 
 function MenuIcon() {
@@ -31,6 +30,14 @@ function DashboardIcon() {
   );
 }
 
+function ActivityIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="square" strokeLinejoin="miter" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+
 function SettingsIcon() {
   return (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -40,18 +47,18 @@ function SettingsIcon() {
   );
 }
 
-function PaletteIcon() {
-  return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-      <path strokeLinecap="square" strokeLinejoin="miter" d="M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402M6.75 21A3.75 3.75 0 013 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 003.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.879 2.88M6.75 17.25h.008v.008H6.75v-.008z" />
-    </svg>
-  );
-}
-
 function SyncIcon() {
   return (
     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="square" strokeLinejoin="miter" d="M4.5 12a7.5 7.5 0 0015 0m-15 0a7.5 7.5 0 1115 0m-15 0H3m16.5 0H21m-1.5 0H12m-8.457 3.077l1.41-.513m14.095-5.13l1.41-.513M5.106 17.785l1.15-.964m11.49-9.642l1.149-.964M7.501 19.795l.75-1.3m7.5-12.99l.75-1.3m-6.063 16.658l.26-1.477m2.605-14.772l.26-1.477m0 17.726l-.26-1.477M10.698 4.614l-.26-1.477M16.5 19.794l-.75-1.299M7.5 4.205L6.75 2.906M12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
+    </svg>
+  );
+}
+
+function LogoutIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="square" strokeLinejoin="miter" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
     </svg>
   );
 }
@@ -131,6 +138,64 @@ export default function Layout() {
           </div>
         </div>
 
+        {/* User profile section */}
+        {user && (
+          <div className="mx-4 mb-4 relative">
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="w-full px-3 py-3 bg-[#0a0a0f] border-2 border-[#2a2a4a] hover:border-[#4cc9f0] transition-all group"
+            >
+              <div className="flex items-center gap-3">
+                <img
+                  src={user.avatarUrl}
+                  alt={user.displayName}
+                  className="w-8 h-8 border border-[#f72585] bg-[#1a1a2e]"
+                />
+                <div className="flex-1 text-left">
+                  <div className="text-sm font-medium text-[#e8e8e8] truncate">
+                    {user.displayName}
+                  </div>
+                  <div className="text-[10px] text-[#4cc9f0] font-mono truncate">
+                    @{user.githubUsername}
+                  </div>
+                </div>
+                <svg
+                  className={`w-4 h-4 text-[#666666] transition-transform ${showUserMenu ? 'rotate-180' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="square" strokeLinejoin="miter" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </button>
+
+            {/* User dropdown menu */}
+            {showUserMenu && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-[#0a0a0f] border-2 border-[#2a2a4a] z-50">
+                <button
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="w-full flex items-center gap-3 px-3 py-3 text-sm text-[#ff3366] hover:bg-[rgba(255,51,102,0.1)] transition-all disabled:opacity-50"
+                >
+                  {isLoggingOut ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-current border-t-transparent animate-spin" />
+                      <span className="uppercase tracking-wide">Signing out...</span>
+                    </>
+                  ) : (
+                    <>
+                      <LogoutIcon />
+                      <span className="uppercase tracking-wide">Sign Out</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* System status indicator */}
         <div className="mx-4 mb-4 px-3 py-2 bg-[#0a0a0f] border border-[#2a2a4a]">
           <div className="flex items-center gap-2 text-xs">
@@ -192,6 +257,14 @@ export default function Layout() {
           <Outlet />
         </div>
       </main>
+
+      {/* Click outside to close user menu */}
+      {showUserMenu && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setShowUserMenu(false)}
+        />
+      )}
     </div>
   );
 }
