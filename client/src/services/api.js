@@ -1,8 +1,9 @@
 import axios from 'axios';
+import envConfig from '../config/env';
 
 const api = axios.create({
     baseURL: '/api',
-    timeout: 120000,
+    timeout: envConfig.apiTimeout,
 });
 
 // Add auth token to every request
