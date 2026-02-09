@@ -1,8 +1,14 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../services/api';
+import { useToast } from './Toast';
 
-export default function ScanResults({ scan }) {
+export default function ScanResults({ scan, onPRCreated }) {
+  const toast = useToast();
   const [expandedSkipped, setExpandedSkipped] = useState({});
+  const [selectedRepos, setSelectedRepos] = useState(new Set());
+  const [creatingPR, setCreatingPR] = useState(false);
+  const [showSelection, setShowSelection] = useState(false);
 
   if (!scan) return null;
 
@@ -13,6 +19,59 @@ export default function ScanResults({ scan }) {
   const prUrls = scan.pr_urls || [];
   const status = scan.status;
   const scanId = scan.id;
+
+  // Toggle repo selection
+  const toggleRepoSelection = (repoId) => {
+    setSelectedRepos(prev => {
+      const next = new Set(prev);
+      if (next.has(repoId)) {
+        next.delete(repoId);
+      } else {
+        next.add(repoId);
+      }
+      return next;
+    });
+  };
+
+  // Select all processed repos
+  const selectAll = () => {
+    const allIds = processedRepos.map(r => r.id || r.full_name);
+    setSelectedRepos(new Set(allIds));
+  };
+
+  // Deselect all
+  const deselectAll = () => {
+    setSelectedRepos(new Set());
+  };
+
+  // Create PR from selected repos
+  const handleCreatePR = async () => {
+    if (selectedRepos.size === 0) {
+      toast('⚠️ Please select at least one repository', 'warning');
+      return;
+    }
+
+    setCreatingPR(true);
+    try {
+      const { data } = await api.post('/scan/create-pr', {
+        scan_id: scanId,
+        selected_repo_ids: Array.from(selectedRepos)
+      });
+
+      if (data.success) {
+        toast(`✅ PR created successfully! ${data.repos_added} repo(s) added`, 'success');
+        setShowSelection(false);
+        setSelectedRepos(new Set());
+        onPRCreated?.(data);
+      }
+    } catch (err) {
+      console.error('Failed to create PR:', err);
+      const errorMsg = err.response?.data?.error || 'Failed to create pull request';
+      toast(`❌ ${errorMsg}`, 'error');
+    } finally {
+      setCreatingPR(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -102,15 +161,117 @@ export default function ScanResults({ scan }) {
             <h3 className="text-sm font-medium text-[#e8e8e8] uppercase tracking-wide">
               <span className="text-[#39ff14]">//</span> Processed for Portfolio
             </h3>
-            <span className="text-xs font-mono bg-[#39ff14]/10 text-[#39ff14] px-2 py-1 border border-[#39ff14]">
-              {processedRepos.length}
-            </span>
+            <div className="flex items-center gap-3">
+              {showSelection && (
+                <span className="text-xs font-mono bg-[#f72585]/10 text-[#f72585] px-2 py-1 border border-[#f72585]">
+                  {selectedRepos.size} SELECTED
+                </span>
+              )}
+              <span className="text-xs font-mono bg-[#39ff14]/10 text-[#39ff14] px-2 py-1 border border-[#39ff14]">
+                {processedRepos.length}
+              </span>
+              {!showSelection && prUrls.length === 0 && (
+                <button
+                  onClick={() => setShowSelection(true)}
+                  className="text-xs font-mono text-[#4cc9f0] hover:text-[#39ff14] uppercase tracking-wide transition-colors px-2 py-1 border border-[#4cc9f0] hover:border-[#39ff14]"
+                >
+                  [CREATE PR]
+                </button>
+              )}
+            </div>
           </div>
+
+          {/* Selection Mode Controls */}
+          {showSelection && (
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#2a2a4a]">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={selectAll}
+                  className="text-xs font-mono text-[#4cc9f0] hover:text-[#39ff14] transition-colors uppercase tracking-wide"
+                >
+                  [SELECT ALL]
+                </button>
+                <span className="text-[#2a2a4a]">|</span>
+                <button
+                  onClick={deselectAll}
+                  className="text-xs font-mono text-[#666666] hover:text-[#FFA500] transition-colors uppercase tracking-wide"
+                >
+                  [DESELECT ALL]
+                </button>
+              </div>
+              <button
+                onClick={() => {
+                  setShowSelection(false);
+                  setSelectedRepos(new Set());
+                }}
+                className="text-xs font-mono text-[#666666] hover:text-[#ff3366] transition-colors uppercase tracking-wide"
+              >
+                [CANCEL]
+              </button>
+            </div>
+          )}
+
           <div className="space-y-2">
-            {processedRepos.map((repo) => (
-              <RepoCard key={repo.full_name || repo.name} repo={repo} variant="success" />
-            ))}
+            {processedRepos.map((repo) => {
+              const repoId = repo.id || repo.full_name;
+              const isSelected = selectedRepos.has(repoId);
+              
+              return (
+                <div
+                  key={repo.full_name || repo.name}
+                  className={`
+                    ${showSelection ? 'flex items-start gap-3' : ''}
+                    ${showSelection && isSelected ? 'bg-[#39ff14]/5 border border-[#39ff14] p-3' : showSelection ? 'border border-[#2a2a4a] p-3' : ''}
+                  `}
+                >
+                  {showSelection && (
+                    <button
+                      onClick={() => toggleRepoSelection(repoId)}
+                      className="flex-shrink-0 w-5 h-5 border-2 border-[#4cc9f0] bg-[#0a0a0f] flex items-center justify-center hover:border-[#39ff14] transition-colors mt-1"
+                    >
+                      {isSelected && (
+                        <svg className="w-3 h-3 text-[#39ff14]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="square" strokeLinejoin="miter" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </button>
+                  )}
+                  <div className="flex-1">
+                    <RepoCard repo={repo} variant="success" />
+                  </div>
+                </div>
+              );
+            })}
           </div>
+
+          {/* Create PR Button */}
+          {showSelection && (
+            <div className="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-[#2a2a4a]">
+              <button
+                onClick={handleCreatePR}
+                disabled={creatingPR || selectedRepos.size === 0}
+                className={`
+                  px-6 py-3 font-mono text-sm uppercase tracking-wide transition-all
+                  ${creatingPR || selectedRepos.size === 0
+                    ? 'bg-[#2a2a4a] text-[#666666] cursor-not-allowed'
+                    : 'bg-[#39ff14] text-[#0a0a0f] hover:shadow-[0_0_15px_rgba(57,255,20,0.5)] border-2 border-[#39ff14]'
+                  }
+                `}
+              >
+                {creatingPR ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Creating PR...
+                  </span>
+                ) : (
+                  `Create PR (${selectedRepos.size} selected)`
+                )}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
