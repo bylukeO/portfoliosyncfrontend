@@ -2,8 +2,8 @@ import axios from 'axios';
 import envConfig from '../config/env';
 
 const api = axios.create({
-    baseURL: '/api',
-    timeout: envConfig.apiTimeout,
+    baseURL: import.meta.env.VITE_API_URL || '/api',
+    timeout: 120000,
 });
 
 // Add auth token to every request

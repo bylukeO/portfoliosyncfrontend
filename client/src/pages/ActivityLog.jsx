@@ -8,6 +8,8 @@ export default function ActivityLog() {
     const [error, setError] = useState(null);
     const [filter, setFilter] = useState('all'); // all, completed, failed, pending, processing
     const [expandedIds, setExpandedIds] = useState(new Set());
+    const [isScanning, setIsScanning] = useState(false);
+    const [scanMessage, setScanMessage] = useState(null);
     const [prStats, setPrStats] = useState({ totalPRs: 0, loading: true });
 
     // Fetch scans from correct API endpoint
@@ -24,33 +26,30 @@ export default function ActivityLog() {
         } finally {
             setLoading(false);
         }
-    }, []);
-    
-    // Fetch accurate PR statistics
-    const fetchPRStats = useCallback(async () => {
-        try {
-            const { data } = await api.get('/user/prs');
-            setPrStats({ totalPRs: data.total_prs || 0, loading: false });
-        } catch (error) {
-            console.error('Error fetching PR stats:', error);
-            // Fallback to calculating from scans
-            const totalPRs = scans.reduce((sum, scan) => {
-                const prUrls = scan.pr_urls || [];
-                return sum + prUrls.length;
-            }, 0);
-            setPrStats({ totalPRs, loading: false });
-        }
-    }, [scans]);
+    };
 
-    useEffect(() => {
-        fetchScans();
-    }, [fetchScans]);
-    
-    useEffect(() => {
-        if (scans.length > 0) {
-            fetchPRStats();
+    const triggerScan = async () => {
+        try {
+            setIsScanning(true);
+            setScanMessage(null);
+            const response = await api.post('/scan/trigger');
+            setScanMessage({ type: 'success', text: response.data.message || 'Scan started successfully!' });
+            // Refresh the scans list after a short delay to let the scan start
+            setTimeout(() => {
+                fetchScans();
+            }, 1000);
+        } catch (err) {
+            console.error('Failed to trigger scan:', err);
+            setScanMessage({
+                type: 'error',
+                text: err.response?.data?.error || 'Failed to start scan'
+            });
+        } finally {
+            setIsScanning(false);
+            // Clear message after 5 seconds
+            setTimeout(() => setScanMessage(null), 5000);
         }
-    }, [scans, fetchPRStats]);
+    };
 
     const toggleExpand = (id) => {
         setExpandedIds(prev => {
@@ -179,17 +178,51 @@ export default function ActivityLog() {
     return (
         <div className="p-6 md:p-8 max-w-5xl mx-auto">
             {/* Header */}
-            <div className="mb-8">
-                <div className="flex items-center gap-3 mb-2">
-                    <h1 className="text-2xl md:text-3xl font-bold text-[#e8e8e8] tracking-wide uppercase">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+                <div>
+                    <h1 className="text-2xl md:text-3xl font-bold text-[#e8e8e8] tracking-wide uppercase mb-2">
                         Activity Log
                     </h1>
-                    <span className="w-2 h-2 bg-[#39ff14] animate-pulse shadow-[0_0_8px_rgba(57,255,20,0.6)]" />
+                    <p className="text-[#666666] font-mono text-sm">
+                        // Complete history of portfolio sync operations
+                    </p>
                 </div>
-                <p className="text-[#666666] font-mono text-sm">
-                    <span className="text-[#f72585]">&gt;</span> Complete history of portfolio sync operations
-                </p>
+                <button
+                    onClick={triggerScan}
+                    disabled={isScanning}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#f72585] border-2 border-[#f72585] text-[#0a0a0f] font-bold uppercase text-sm tracking-wide hover:bg-transparent hover:text-[#f72585] hover:shadow-[0_0_15px_rgba(247,37,133,0.5)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                    {isScanning ? (
+                        <>
+                            <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
+                            <span>Scanning...</span>
+                        </>
+                    ) : (
+                        <>
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                            </svg>
+                            <span>Run Scan</span>
+                        </>
+                    )}
+                </button>
             </div>
+
+            {/* Scan Message */}
+            {scanMessage && (
+                <div className={`mb-6 p-4 border-2 ${scanMessage.type === 'success'
+                    ? 'border-[#39ff14] bg-[rgba(57,255,20,0.1)]'
+                    : 'border-[#ff3366] bg-[rgba(255,51,102,0.1)]'
+                    }`}>
+                    <p className={`font-mono text-sm ${scanMessage.type === 'success' ? 'text-[#39ff14]' : 'text-[#ff3366]'
+                        }`}>
+                        <span className="text-[#666666]">&gt;</span> {scanMessage.text}
+                    </p>
+                </div>
+            )}
 
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -271,11 +304,10 @@ export default function ActivityLog() {
                         <button
                             key={f}
                             onClick={() => setFilter(f)}
-                            className={`px-4 py-2 text-xs font-bold uppercase tracking-wide transition-all border-2 ${
-                                filter === f
-                                    ? 'border-[#f72585] bg-[#f72585] text-[#0a0a0f]'
-                                    : 'border-[#2a2a4a] text-[#a0a0a0] hover:border-[#4cc9f0] hover:text-[#4cc9f0]'
-                            }`}
+                            className={`px-4 py-2 text-xs font-bold uppercase tracking-wide transition-all border-2 ${filter === f
+                                ? 'border-[#f72585] bg-[#f72585] text-[#0a0a0f]'
+                                : 'border-[#2a2a4a] text-[#a0a0a0] hover:border-[#4cc9f0] hover:text-[#4cc9f0]'
+                                }`}
                         >
                             {f}
                         </button>
@@ -320,27 +352,23 @@ export default function ActivityLog() {
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {filteredScans.map((scan) => {
-                        const newRepos = scan.new_repos || [];
-                        const processedRepos = scan.processed_repos || [];
-                        const skippedRepos = scan.skipped_repos || [];
-                        const prUrls = scan.pr_urls || [];
-                        const scanDate = scan.scanned_at || scan.created_at;
-                        const isExpanded = expandedIds.has(scan.id);
-
-                        return (
-                            <div
-                                key={scan.id}
-                                className="bg-[#1a1a2e] border-2 border-[#2a2a4a] hover:border-[#4cc9f0] transition-colors overflow-hidden"
+                    {filteredScans.map((scan) => (
+                        <div
+                            key={scan.id}
+                            className="bg-[#1a1a2e] border-2 border-[#2a2a4a] hover:border-[#4cc9f0] transition-colors"
+                        >
+                            {/* Header Row */}
+                            <button
+                                onClick={() => toggleExpand(scan.id)}
+                                className="w-full flex items-center justify-between px-4 py-4 text-left"
                             >
-                                {/* Header Row */}
-                                <button
-                                    onClick={() => toggleExpand(scan.id)}
-                                    className="w-full flex items-center justify-between px-4 py-4 text-left"
-                                >
-                                    <div className="flex items-center gap-4">
-                                        {/* Status Indicator */}
-                                        <div className={`w-3 h-3 ${getStatusColor(scan.status)}`} />
+                                <div className="flex items-center gap-4">
+                                    {/* Status Indicator */}
+                                    <div className={`w-3 h-3 ${scan.status === 'completed' ? 'bg-[#39ff14]' :
+                                        scan.status === 'failed' ? 'bg-[#ff3366]' :
+                                            scan.status === 'running' ? 'bg-[#4cc9f0] animate-pulse' :
+                                                'bg-[#ffcc00]'
+                                        }`} />
 
                                         {/* Date & Time */}
                                         <div>
