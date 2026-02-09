@@ -26,7 +26,33 @@ export default function ActivityLog() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    // Fetch accurate PR statistics
+    const fetchPRStats = useCallback(async () => {
+        try {
+            const { data } = await api.get('/user/prs');
+            setPrStats({ totalPRs: data.total_prs || 0, loading: false });
+        } catch (error) {
+            console.error('Error fetching PR stats:', error);
+            // Fallback to calculating from scans
+            const totalPRs = scans.reduce((sum, scan) => {
+                const prUrls = scan.pr_urls || [];
+                return sum + prUrls.length;
+            }, 0);
+            setPrStats({ totalPRs, loading: false });
+        }
+    }, [scans]);
+
+    useEffect(() => {
+        fetchScans();
+    }, [fetchScans]);
+
+    useEffect(() => {
+        if (scans.length > 0) {
+            fetchPRStats();
+        }
+    }, [scans, fetchPRStats]);
 
     const triggerScan = async () => {
         try {
@@ -352,10 +378,18 @@ export default function ActivityLog() {
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {filteredScans.map((scan) => (
+                    {filteredScans.map((scan) => {
+                        const newRepos = scan.new_repos || [];
+                        const processedRepos = scan.processed_repos || [];
+                        const skippedRepos = scan.skipped_repos || [];
+                        const prUrls = scan.pr_urls || [];
+                        const scanDate = scan.scanned_at || scan.created_at;
+                        const isExpanded = expandedIds.has(scan.id);
+
+                        return (
                         <div
                             key={scan.id}
-                            className="bg-[#1a1a2e] border-2 border-[#2a2a4a] hover:border-[#4cc9f0] transition-colors"
+                            className="bg-[#1a1a2e] border-2 border-[#2a2a4a] hover:border-[#4cc9f0] transition-colors overflow-hidden"
                         >
                             {/* Header Row */}
                             <button
@@ -364,50 +398,46 @@ export default function ActivityLog() {
                             >
                                 <div className="flex items-center gap-4">
                                     {/* Status Indicator */}
-                                    <div className={`w-3 h-3 ${scan.status === 'completed' ? 'bg-[#39ff14]' :
-                                        scan.status === 'failed' ? 'bg-[#ff3366]' :
-                                            scan.status === 'running' ? 'bg-[#4cc9f0] animate-pulse' :
-                                                'bg-[#ffcc00]'
-                                        }`} />
+                                    <div className={`w-3 h-3 ${getStatusColor(scan.status)}`} />
 
-                                        {/* Date & Time */}
-                                        <div>
-                                            <p className="text-[#e8e8e8] font-mono text-sm">
-                                                {formatDate(scanDate)}
-                                            </p>
-                                            <p className="text-[#666666] text-xs font-mono">
-                                                Scan ID: #{scan.id}
-                                            </p>
-                                        </div>
+                                    {/* Date & Time */}
+                                    <div>
+                                        <p className="text-[#e8e8e8] font-mono text-sm">
+                                            {formatDate(scanDate)}
+                                        </p>
+                                        <p className="text-[#666666] text-xs font-mono">
+                                            Scan ID: #{scan.id}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-4">
+                                    {/* Quick Stats */}
+                                    <div className="hidden md:flex items-center gap-4 text-xs">
+                                        <span className="text-[#4cc9f0]">{newRepos.length} new</span>
+                                        <span className="text-[#39ff14]">{processedRepos.length} qualified</span>
+                                        {prUrls.length > 0 && (
+                                            <span className="text-[10px] text-[#39ff14] bg-[#39ff14]/10 px-2 py-0.5 border border-[#39ff14]">
+                                                {prUrls.length} PR{prUrls.length > 1 ? 's' : ''}
+                                            </span>
+                                        )}
                                     </div>
 
-                                    <div className="flex items-center gap-4">
-                                        {/* Quick Stats */}
-                                        <div className="hidden md:flex items-center gap-4 text-xs">
-                                            <span className="text-[#4cc9f0]">{newRepos.length} new</span>
-                                            <span className="text-[#39ff14]">{processedRepos.length} qualified</span>
-                                            {prUrls.length > 0 && (
-                                                <span className="text-[10px] text-[#39ff14] bg-[#39ff14]/10 px-2 py-0.5 border border-[#39ff14]">
-                                                    {prUrls.length} PR{prUrls.length > 1 ? 's' : ''}
-                                                </span>
-                                            )}
-                                        </div>
+                                    {/* Status Badge */}
+                                    {getStatusBadge(scan.status)}
 
-                                        {/* Status Badge */}
-                                        {getStatusBadge(scan.status)}
-
-                                        {/* Expand Icon */}
-                                        <svg
-                                            className={`w-5 h-5 text-[#4cc9f0] transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                            strokeWidth={2}
-                                        >
-                                            <path strokeLinecap="square" strokeLinejoin="miter" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                                        </svg>
-                                    </div>
-                                </button>
+                                    {/* Expand Icon */}
+                                    <svg
+                                        className={`w-5 h-5 text-[#4cc9f0] transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth={2}
+                                    >
+                                        <path strokeLinecap="square" strokeLinejoin="miter" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                    </svg>
+                                </div>
+                            </button>
 
                                 {/* Expanded Details */}
                                 {isExpanded && (
@@ -513,6 +543,7 @@ export default function ActivityLog() {
                             </div>
                         );
                     })}
+
                 </div>
             )}
 
