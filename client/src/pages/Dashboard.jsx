@@ -5,6 +5,7 @@ import { useToast } from '../components/Toast';
 import ScanProgress from '../components/ScanProgress';
 import ScanResults from '../components/ScanResults';
 import ActivityLog from '../components/ActivityLog';
+import RepoSelection from '../components/RepoSelection';
 import { Button, Card } from '../components/ui';
 
 export default function Dashboard() {
@@ -51,6 +52,23 @@ export default function Dashboard() {
       const scanData = data.result || data;
       
       setScanStatus(scanData.status);
+      
+      // If awaiting_selection, stop polling and show selection UI
+      if (scanData.status === 'awaiting_selection') {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+        setScanning(false);
+        setLatestResult(scanData);
+        setLastScan(scanData.scanned_at || new Date().toISOString());
+        
+        const qualifiedCount = scanData.processed_repos?.length || 0;
+        toast(`✓ ${qualifiedCount} repositories qualified for your portfolio. Select which ones to add!`, 'info');
+        
+        setScanType(null);
+        // Refresh the scans list
+        fetchScans();
+        return;
+      }
       
       // If completed or failed, stop polling
       if (scanData.status === 'completed' || scanData.status === 'failed') {
@@ -136,8 +154,10 @@ export default function Dashboard() {
       // Build request body for full scan
       const body = type === 'full' && forceContinue ? { force_continue: true } : {};
       
-      // Trigger the scan - API returns: { success: true, message: "...", scan_id: "..." }
-      // OR for full scan: { success: true, action: "confirm_required", prompt: {...} }
+      // Trigger the scan - API returns:
+      // { success: true, message: "...", scan_id: "..." }
+      // OR for full scan with confirmation needed: { success: true, action: "confirm_required", prompt: {...} }
+      // OR for full scan with selection needed: { scanId, status: "awaiting_selection", action: "selection_required", qualifiedRepos: [...], ... }
       const { data } = await api.post(endpoint, body);
       
       // Check if confirmation is required (no new repos found)
@@ -149,7 +169,36 @@ export default function Dashboard() {
         return;
       }
       
-      const scanId = data.scan_id;
+      // Check if selection is required (qualified repos ready)
+      if (data.action === 'selection_required' && data.status === 'awaiting_selection') {
+        setScanning(false);
+        setScanType(null);
+        setScanStatus('awaiting_selection');
+        setCurrentScanId(data.scanId);
+        
+        // Build scan result object for selection UI
+        const selectionScanData = {
+          id: data.scanId,
+          status: 'awaiting_selection',
+          new_repos: data.newReposFound ? [] : [], // New repos already evaluated
+          processed_repos: data.qualifiedRepos || [],
+          skipped_repos: data.skippedRepos || [],
+          pr_urls: [],
+          scanned_at: new Date().toISOString()
+        };
+        
+        setLatestResult(selectionScanData);
+        setLastScan(selectionScanData.scanned_at);
+        
+        const qualifiedCount = data.qualifiedRepos?.length || 0;
+        toast(`✓ ${qualifiedCount} repositories qualified! Select which ones to add to your portfolio.`, 'info');
+        
+        // Refresh the scans list
+        fetchScans();
+        return;
+      }
+      
+      const scanId = data.scan_id || data.scanId;
       
       if (type === 'full') {
         // Full scan runs in background - show immediate feedback
@@ -210,6 +259,31 @@ export default function Dashboard() {
       // Trigger full scan with force_continue
       runScan('full', true);
     }
+  };
+
+  // Handle repo selection completion (PR created)
+  const handleSelectionComplete = async (prData) => {
+    // Clear the selection UI
+    setLatestResult(null);
+    setScanStatus(null);
+    setCurrentScanId(null);
+    
+    // Refresh scans to show updated status
+    await fetchScans();
+    
+    // If there's a PR URL, show it
+    if (prData.pr_url) {
+      toast(`🔗 View PR: ${prData.pr_url}`, 'info');
+    }
+  };
+
+  // Handle repo selection cancellation
+  const handleSelectionCancel = () => {
+    // Clear the selection UI
+    setLatestResult(null);
+    setScanStatus(null);
+    setCurrentScanId(null);
+    toast('Selection cancelled. You can run another scan anytime.', 'info');
   };
 
   // ESC key to close confirmation popup
@@ -460,14 +534,25 @@ export default function Dashboard() {
       {/* Scan Progress */}
       {scanning && <ScanProgress status={scanStatus} scanType={scanType} />}
 
-      {/* Scan Results */}
-      {!scanning && latestResult && (
+      {/* Repo Selection UI (for awaiting_selection status) */}
+      {!scanning && latestResult && latestResult.status === 'awaiting_selection' && (
+        <div className="mb-8">
+          <RepoSelection 
+            scan={latestResult} 
+            onComplete={handleSelectionComplete}
+            onCancel={handleSelectionCancel}
+          />
+        </div>
+      )}
+
+      {/* Scan Results (for completed/failed scans) */}
+      {!scanning && latestResult && latestResult.status !== 'awaiting_selection' && (
         <div className="mb-8">
           <div className="text-xs font-bold text-[#666666] uppercase tracking-widest mb-4 flex items-center gap-2">
             <span className="text-[#f72585]">//</span>
             Latest Scan Results
           </div>
-          <ScanResults scan={latestResult} />
+          <ScanResults scan={latestResult} onPRCreated={handleSelectionComplete} />
         </div>
       )}
 

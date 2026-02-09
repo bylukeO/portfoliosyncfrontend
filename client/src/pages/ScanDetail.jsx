@@ -187,22 +187,6 @@ export default function ScanDetail() {
   const scanDate = scan.scanned_at || scan.created_at;
   const statusConfig = getStatusConfig(scan.status);
 
-  // Get active tab repos
-  const getActiveRepos = () => {
-    switch (activeTab) {
-      case "new":
-        return newRepos;
-      case "processed":
-        return processedRepos;
-      case "skipped":
-        return skippedRepos;
-      default:
-        return newRepos;
-    }
-  };
-
-  const activeRepos = getActiveRepos();
-
   return (
     <div className="p-6 md:p-8 max-w-5xl mx-auto">
       {/* Header */}
