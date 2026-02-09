@@ -6,151 +6,321 @@ export default function ScanResults({ scan }) {
 
   if (!scan) return null;
 
-  const { newRepos = [], qualified = [], skipped = [], prUrl, id } = scan;
+  // Handle the actual API response structure
+  const newRepos = scan.new_repos || [];
+  const processedRepos = scan.processed_repos || [];
+  const skippedRepos = scan.skipped_repos || [];
+  const prUrls = scan.pr_urls || [];
+  const status = scan.status;
+  const scanId = scan.id;
 
   return (
     <div className="space-y-4">
-      {/* New Repos */}
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-medium text-slate-300">New Repos Detected</h3>
-          <span className="text-xs font-mono bg-cyan-500/10 text-cyan-400 px-2 py-1 rounded-full">
-            {newRepos.length}
-          </span>
+      {/* Status Badge */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <StatusBadge status={status} />
+          {scanId && (
+            <span className="text-xs text-[#666666] font-mono">
+              Scan ID: #{scanId}
+            </span>
+          )}
         </div>
-        {newRepos.length === 0 ? (
-          <p className="text-sm text-slate-500">No new repos found</p>
-        ) : (
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {/* New Repos Count */}
+        <div className="bg-[#1a1a2e] border-2 border-[#4cc9f0] p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-[10px] text-[#666666] uppercase tracking-widest mb-1">
+                New Repos Detected
+              </div>
+              <div className="text-2xl font-bold text-[#4cc9f0]">{newRepos.length}</div>
+            </div>
+            <svg className="w-8 h-8 text-[#4cc9f0]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="square" strokeLinejoin="miter" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Processed Count */}
+        <div className="bg-[#1a1a2e] border-2 border-[#39ff14] p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-[10px] text-[#666666] uppercase tracking-widest mb-1">
+                Qualified for Portfolio
+              </div>
+              <div className="text-2xl font-bold text-[#39ff14]">{processedRepos.length}</div>
+            </div>
+            <svg className="w-8 h-8 text-[#39ff14]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="square" strokeLinejoin="miter" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Skipped Count */}
+        <div className="bg-[#1a1a2e] border-2 border-[#FFA500] p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-[10px] text-[#666666] uppercase tracking-widest mb-1">
+                Skipped
+              </div>
+              <div className="text-2xl font-bold text-[#FFA500]">{skippedRepos.length}</div>
+            </div>
+            <svg className="w-8 h-8 text-[#FFA500]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="square" strokeLinejoin="miter" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      {/* New Repos List */}
+      {newRepos.length > 0 && (
+        <div className="bg-[#1a1a2e] border-2 border-[#2a2a4a] p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-[#e8e8e8] uppercase tracking-wide">
+              <span className="text-[#4cc9f0]">//</span> New Repositories
+            </h3>
+            <span className="text-xs font-mono bg-[#4cc9f0]/10 text-[#4cc9f0] px-2 py-1 border border-[#4cc9f0]">
+              {newRepos.length}
+            </span>
+          </div>
           <div className="space-y-2">
             {newRepos.map((repo) => (
-              <div key={repo.name} className="flex items-center justify-between py-2 px-3 bg-slate-900/50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
-                  </svg>
-                  <span className="text-sm text-white font-medium">{repo.name}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  {repo.language && (
-                    <span className="text-xs text-slate-400 bg-slate-800 px-2 py-0.5 rounded">
-                      {repo.language}
-                    </span>
-                  )}
-                  {repo.createdAt && (
-                    <span className="text-xs text-slate-500">
-                      {new Date(repo.createdAt).toLocaleDateString()}
-                    </span>
-                  )}
-                </div>
-              </div>
+              <RepoCard key={repo.full_name || repo.name} repo={repo} />
             ))}
-          </div>
-        )}
-      </div>
-
-      {/* Qualified + Skipped row */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-slate-300">Qualified for Portfolio</h3>
-            <span className="text-xs font-mono bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded-full">
-              {qualified.length}
-            </span>
-          </div>
-          {qualified.length === 0 ? (
-            <p className="text-sm text-slate-500">None qualified</p>
-          ) : (
-            <div className="space-y-1.5 mt-3">
-              {qualified.map((r) => (
-                <div key={r.name} className="text-sm text-emerald-400 flex items-center gap-2">
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                  </svg>
-                  {r.name}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-slate-300">Skipped</h3>
-            <span className="text-xs font-mono bg-amber-500/10 text-amber-400 px-2 py-1 rounded-full">
-              {skipped.length}
-            </span>
-          </div>
-          {skipped.length === 0 ? (
-            <p className="text-sm text-slate-500">None skipped</p>
-          ) : (
-            <div className="space-y-1.5 mt-3">
-              {skipped.map((r) => (
-                <div key={r.name}>
-                  <button
-                    onClick={() =>
-                      setExpandedSkipped((prev) => ({
-                        ...prev,
-                        [r.name]: !prev[r.name],
-                      }))
-                    }
-                    className="text-sm text-amber-400 flex items-center gap-2 w-full text-left hover:text-amber-300 transition-colors"
-                  >
-                    <svg
-                      className={`w-3 h-3 transition-transform ${expandedSkipped[r.name] ? 'rotate-90' : ''}`}
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-                    </svg>
-                    {r.name}
-                  </button>
-                  {expandedSkipped[r.name] && (
-                    <p className="text-xs text-slate-500 ml-5 mt-1">{r.reason || 'No reason provided'}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* PR Link */}
-      {prUrl && (
-        <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
-              <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-1.135a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.34 8.374" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-emerald-400">Pull Request Created</p>
-              <p className="text-xs text-slate-500 mt-0.5">Review and merge to update your portfolio</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {id && (
-              <Link
-                to={`/scan/${id}`}
-                className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
-              >
-                View Details
-              </Link>
-            )}
-            <a
-              href={prUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-lg text-sm font-medium transition-colors"
-            >
-              Open on GitHub
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-              </svg>
-            </a>
           </div>
         </div>
       )}
+
+      {/* Processed Repos List */}
+      {processedRepos.length > 0 && (
+        <div className="bg-[#1a1a2e] border-2 border-[#2a2a4a] p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-[#e8e8e8] uppercase tracking-wide">
+              <span className="text-[#39ff14]">//</span> Processed for Portfolio
+            </h3>
+            <span className="text-xs font-mono bg-[#39ff14]/10 text-[#39ff14] px-2 py-1 border border-[#39ff14]">
+              {processedRepos.length}
+            </span>
+          </div>
+          <div className="space-y-2">
+            {processedRepos.map((repo) => (
+              <RepoCard key={repo.full_name || repo.name} repo={repo} variant="success" />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Skipped Repos */}
+      {skippedRepos.length > 0 && (
+        <div className="bg-[#1a1a2e] border-2 border-[#2a2a4a] p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-[#e8e8e8] uppercase tracking-wide">
+              <span className="text-[#FFA500]">//</span> Skipped Repositories
+            </h3>
+            <span className="text-xs font-mono bg-[#FFA500]/10 text-[#FFA500] px-2 py-1 border border-[#FFA500]">
+              {skippedRepos.length}
+            </span>
+          </div>
+          <div className="space-y-2">
+            {skippedRepos.map((repo) => (
+              <div key={repo.full_name || repo.name}>
+                <button
+                  onClick={() =>
+                    setExpandedSkipped((prev) => ({
+                      ...prev,
+                      [repo.name]: !prev[repo.name],
+                    }))
+                  }
+                  className="w-full"
+                >
+                  <RepoCard repo={repo} variant="warning" expandable />
+                </button>
+                {expandedSkipped[repo.name] && repo.reason && (
+                  <div className="ml-12 mt-2 p-3 bg-[#0a0a0f] border border-[#FFA500]/20">
+                    <p className="text-xs text-[#FFA500] font-mono">
+                      <span className="text-[#666666]">Reason:</span> {repo.reason}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* PR Links */}
+      {prUrls.length > 0 && (
+        <div className="bg-[#1a1a2e] border-2 border-[#39ff14] p-5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#39ff14]/10 border-2 border-[#39ff14] flex items-center justify-center">
+              <svg className="w-5 h-5 text-[#39ff14]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="square" strokeLinejoin="miter" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-[#39ff14] uppercase tracking-wide">
+                Pull Request{prUrls.length > 1 ? 's' : ''} Created
+              </p>
+              <p className="text-xs text-[#666666] mt-0.5 font-mono">
+                Review and merge to update your portfolio
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            {prUrls.map((url, index) => (
+              <a
+                key={url}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-[#39ff14]/10 hover:bg-[#39ff14]/20 text-[#39ff14] border border-[#39ff14] text-sm font-medium uppercase tracking-wide transition-all"
+              >
+                Open PR {prUrls.length > 1 ? `#${index + 1}` : ''}
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="square" strokeLinejoin="miter" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                </svg>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {newRepos.length === 0 && processedRepos.length === 0 && skippedRepos.length === 0 && (
+        <div className="bg-[#1a1a2e] border-2 border-[#2a2a4a] p-8 text-center">
+          <svg className="w-16 h-16 mx-auto text-[#666666] mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+            <path strokeLinecap="square" strokeLinejoin="miter" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+          </svg>
+          <p className="text-sm text-[#666666] font-mono uppercase tracking-widest">
+            No repositories found in this scan
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Status Badge Component
+function StatusBadge({ status }) {
+  const getStatusConfig = () => {
+    switch (status) {
+      case 'pending':
+        return {
+          icon: '⏳',
+          color: 'text-[#FFA500]',
+          bgColor: 'bg-[#FFA500]/10',
+          borderColor: 'border-[#FFA500]',
+          label: 'Pending',
+        };
+      case 'processing':
+        return {
+          icon: '⚙️',
+          color: 'text-[#3498DB]',
+          bgColor: 'bg-[#3498DB]/10',
+          borderColor: 'border-[#3498DB]',
+          label: 'Processing',
+        };
+      case 'completed':
+        return {
+          icon: '✅',
+          color: 'text-[#2ECC71]',
+          bgColor: 'bg-[#2ECC71]/10',
+          borderColor: 'border-[#2ECC71]',
+          label: 'Completed',
+        };
+      case 'failed':
+        return {
+          icon: '❌',
+          color: 'text-[#E74C3C]',
+          bgColor: 'bg-[#E74C3C]/10',
+          borderColor: 'border-[#E74C3C]',
+          label: 'Failed',
+        };
+      default:
+        return {
+          icon: '•',
+          color: 'text-[#666666]',
+          bgColor: 'bg-[#666666]/10',
+          borderColor: 'border-[#666666]',
+          label: 'Unknown',
+        };
+    }
+  };
+
+  const config = getStatusConfig();
+
+  return (
+    <div className={`inline-flex items-center gap-2 px-3 py-1.5 ${config.bgColor} border ${config.borderColor}`}>
+      <span className="text-sm">{config.icon}</span>
+      <span className={`text-xs font-bold ${config.color} uppercase tracking-widest`}>
+        {config.label}
+      </span>
+    </div>
+  );
+}
+
+// Repo Card Component
+function RepoCard({ repo, variant = 'default', expandable = false }) {
+  const borderColor = variant === 'success' ? 'border-[#39ff14]/30' : variant === 'warning' ? 'border-[#FFA500]/30' : 'border-[#2a2a4a]';
+  const hoverBorder = variant === 'success' ? 'hover:border-[#39ff14]' : variant === 'warning' ? 'hover:border-[#FFA500]' : 'hover:border-[#4cc9f0]';
+
+  return (
+    <div className={`flex items-center justify-between py-3 px-4 bg-[#0a0a0f] border ${borderColor} ${hoverBorder} transition-colors`}>
+      <div className="flex items-center gap-3">
+        <svg className="w-5 h-5 text-[#666666]" fill="currentColor" viewBox="0 0 24 24">
+          <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+        </svg>
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-[#e8e8e8] font-medium">{repo.name}</span>
+            {repo.private && (
+              <span className="text-[10px] text-[#FFA500] bg-[#FFA500]/10 px-1.5 py-0.5 border border-[#FFA500]">
+                PRIVATE
+              </span>
+            )}
+            {expandable && (
+              <svg className="w-3 h-3 text-[#666666]" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+              </svg>
+            )}
+          </div>
+          {repo.description && (
+            <p className="text-xs text-[#666666] mt-0.5 line-clamp-1">
+              {repo.description}
+            </p>
+          )}
+        </div>
+      </div>
+      <div className="flex items-center gap-3">
+        {repo.language && (
+          <span className="text-xs text-[#4cc9f0] bg-[#4cc9f0]/10 px-2 py-1 border border-[#4cc9f0] font-mono">
+            {repo.language}
+          </span>
+        )}
+        {repo.stargazers_count !== undefined && (
+          <div className="flex items-center gap-1 text-xs text-[#666666]">
+            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+            {repo.stargazers_count}
+          </div>
+        )}
+        {repo.html_url && (
+          <a
+            href={repo.html_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-[#4cc9f0] hover:text-[#f72585] transition-colors font-mono uppercase"
+            onClick={(e) => e.stopPropagation()}
+          >
+            View →
+          </a>
+        )}
+      </div>
     </div>
   );
 }
