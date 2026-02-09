@@ -14,8 +14,10 @@ export default function Dashboard() {
   const [scans, setScans] = useState([]);
   const [scansLoading, setScansLoading] = useState(true);
   const [scanning, setScanning] = useState(false);
+  const [scanType, setScanType] = useState(null); // 'quick' or 'full'
   const [currentScanId, setCurrentScanId] = useState(null);
   const [scanStatus, setScanStatus] = useState(null); // 'pending', 'processing', 'completed', 'failed'
+  const [confirmPopup, setConfirmPopup] = useState(null); // For full scan confirmation
   const pollingIntervalRef = useRef(null);
 
   // Fetch all scans
@@ -45,7 +47,7 @@ export default function Dashboard() {
   const pollScanStatus = useCallback(async (scanId) => {
     try {
       const { data } = await api.get(`/scans/${scanId}`);
-      // API returns: { success: true, result: { id, status, new_repos, processed_repos, ... } }
+      // API returns: { success: true, result: { id, status, new_repos, processed_repos, pr_urls, ... } }
       const scanData = data.result || data;
       
       setScanStatus(scanData.status);
@@ -61,11 +63,19 @@ export default function Dashboard() {
         if (scanData.status === 'completed') {
           const newCount = scanData.new_repos?.length || 0;
           const processedCount = scanData.processed_repos?.length || 0;
-          toast(`Scan completed! Found ${newCount} new repos, ${processedCount} qualified for portfolio.`, 'success');
+          const prCount = scanData.pr_urls?.length || 0;
+          
+          if (prCount > 0) {
+            // Full scan completed with PR created
+            toast(`🎉 Full scan complete! ${processedCount} repos added to portfolio. ${prCount} PR created!`, 'success');
+          } else {
+            toast(`Scan completed! Found ${newCount} new repos, ${processedCount} qualified for portfolio.`, 'success');
+          }
         } else {
-          toast('Scan failed. Please try again.', 'error');
+          toast('Scan failed. Please check your settings and try again.', 'error');
         }
         
+        setScanType(null);
         // Refresh the scans list
         fetchScans();
       }
@@ -76,6 +86,7 @@ export default function Dashboard() {
         clearInterval(pollingIntervalRef.current);
         pollingIntervalRef.current = null;
         setScanning(false);
+        setScanType(null);
         toast('Scan error occurred. Please try again.', 'error');
       }
     }
@@ -111,33 +122,106 @@ export default function Dashboard() {
     fetchScans();
   }, [fetchScans]);
 
-  // Run scan
-  const runScan = async () => {
+  // Run scan (supports both quick and full scan)
+  const runScan = async (type = 'quick', forceContinue = false) => {
     setScanning(true);
+    setScanType(type);
     setScanStatus('pending');
     setLatestResult(null);
 
     try {
-      // Trigger the scan - API returns: { success: true, message: "...", scan_id: "..." }
-      const { data } = await api.post('/scans/trigger');
-      const scanId = data.scan_id;
+      // Determine endpoint based on scan type
+      const endpoint = type === 'full' ? '/scan/trigger/full' : '/scans/trigger';
       
-      if (!scanId) {
-        throw new Error('No scan ID returned from server');
+      // Build request body for full scan
+      const body = type === 'full' && forceContinue ? { force_continue: true } : {};
+      
+      // Trigger the scan - API returns: { success: true, message: "...", scan_id: "..." }
+      // OR for full scan: { success: true, action: "confirm_required", prompt: {...} }
+      const { data } = await api.post(endpoint, body);
+      
+      // Check if confirmation is required (no new repos found)
+      if (data.action === 'confirm_required') {
+        setScanning(false);
+        setScanType(null);
+        setScanStatus(null);
+        setConfirmPopup(data.prompt);
+        return;
       }
       
-      setCurrentScanId(scanId);
-      toast('Scan initiated. Polling for results...', 'info');
+      const scanId = data.scan_id;
       
-      // Start polling for status
-      startPolling(scanId);
+      if (type === 'full') {
+        // Full scan runs in background - show immediate feedback
+        toast('🚀 Full AI scan triggered! This may take 2-5 minutes...', 'success');
+        
+        if (scanId) {
+          setCurrentScanId(scanId);
+          // Start polling for status
+          startPolling(scanId);
+        } else {
+          // No scan_id returned for full scan (runs async)
+          // Refresh scans list after a delay
+          setTimeout(() => {
+            fetchScans();
+            setScanning(false);
+            setScanType(null);
+          }, 5000);
+        }
+      } else {
+        // Quick scan - poll for results
+        if (!scanId) {
+          throw new Error('No scan ID returned from server');
+        }
+        
+        setCurrentScanId(scanId);
+        toast('Scan initiated. Polling for results...', 'info');
+        
+        // Start polling for status
+        startPolling(scanId);
+      }
     } catch (err) {
       console.error('Scan trigger error:', err);
       setScanning(false);
+      setScanType(null);
       setScanStatus(null);
-      toast(err.response?.data?.error || 'Failed to trigger scan. Please try again.', 'error');
+      
+      // Check for specific error messages
+      const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Failed to trigger scan. Please try again.';
+      
+      if (errorMsg.toLowerCase().includes('settings')) {
+        toast('⚠️ Please configure your portfolio settings first!', 'warning');
+      } else {
+        toast(errorMsg, 'error');
+      }
     }
   };
+
+  // Handle confirmation popup response
+  const handleConfirmation = async (optionId) => {
+    if (optionId === 'cancel') {
+      setConfirmPopup(null);
+      toast('Scan cancelled.', 'info');
+      return;
+    }
+
+    if (optionId === 'continue_anyway') {
+      setConfirmPopup(null);
+      // Trigger full scan with force_continue
+      runScan('full', true);
+    }
+  };
+
+  // ESC key to close confirmation popup
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape' && confirmPopup) {
+        handleConfirmation('cancel');
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [confirmPopup]);
 
   // Calculate dynamic stats from scans data
   const stats = {
@@ -179,26 +263,103 @@ export default function Dashboard() {
               : 'No scans yet // Awaiting initial sync'}
           </p>
         </div>
-        <Button
-          variant="primary"
-          onClick={runScan}
-          disabled={scanning}
-          icon={
-            scanning ? (
-              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="square" strokeLinejoin="miter" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-              </svg>
-            )
-          }
-        >
-          {scanning ? 'Scanning...' : 'Run Scan'}
-        </Button>
+        
+        {/* Scan Buttons */}
+        <div className="flex items-center gap-3">
+          {/* Quick Scan Button */}
+          <Button
+            variant="secondary"
+            onClick={() => runScan('quick')}
+            disabled={scanning}
+            icon={
+              scanning && scanType === 'quick' ? (
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="square" strokeLinejoin="miter" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+              )
+            }
+          >
+            {scanning && scanType === 'quick' ? 'Scanning...' : 'Quick Scan'}
+          </Button>
+
+          {/* Full AI Scan Button */}
+          <button
+            onClick={() => runScan('full')}
+            disabled={scanning}
+            className={`
+              relative overflow-hidden flex items-center gap-2 px-5 py-2.5 
+              font-bold uppercase tracking-wide text-sm transition-all
+              border-2 border-[#f72585] 
+              ${scanning && scanType === 'full' 
+                ? 'bg-[#f72585]/20 text-[#f72585] cursor-wait' 
+                : 'bg-gradient-to-r from-[#f72585] to-[#4cc9f0] text-[#0a0a0f] hover:shadow-[0_0_20px_rgba(247,37,133,0.5)] hover:scale-[1.02]'
+              }
+              disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none
+            `}
+          >
+            {/* Animated background */}
+            {!scanning && (
+              <div className="absolute inset-0 bg-gradient-to-r from-[#f72585] via-[#4cc9f0] to-[#f72585] opacity-80 animate-pulse" 
+                   style={{ backgroundSize: '200% 100%' }} />
+            )}
+            
+            <span className="relative flex items-center gap-2">
+              {scanning && scanType === 'full' ? (
+                <>
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  <span>AI Processing...</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-base">🚀</span>
+                  <span>Full Scan</span>
+                  <span className="text-[10px] bg-[#0a0a0f]/30 px-1.5 py-0.5 rounded-sm">AI + PR</span>
+                </>
+              )}
+            </span>
+          </button>
+        </div>
       </div>
+
+      {/* Scan Type Info Banner */}
+      {!scanning && (
+        <div className="bg-[#0a0a0f] border border-[#2a2a4a] p-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 border border-[#4cc9f0] bg-[#4cc9f0]/10 flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-[#4cc9f0]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="square" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-[#4cc9f0] uppercase tracking-wider mb-1">Quick Scan</h4>
+                <p className="text-[10px] text-[#666666] font-mono leading-relaxed">
+                  Detects new repositories and compares with previous snapshot. Fast &amp; lightweight.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 border border-[#f72585] bg-[#f72585]/10 flex items-center justify-center flex-shrink-0">
+                <span className="text-sm">🚀</span>
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-[#f72585] uppercase tracking-wider mb-1">Full Scan <span className="text-[8px] text-[#4cc9f0]">(AI + PR)</span></h4>
+                <p className="text-[10px] text-[#666666] font-mono leading-relaxed">
+                  AI analyzes READMEs, evaluates quality, generates portfolio entries &amp; creates PR. Takes 2-5 min.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Quick Stats - Dynamic */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -297,7 +458,7 @@ export default function Dashboard() {
       </div>
 
       {/* Scan Progress */}
-      {scanning && <ScanProgress status={scanStatus} />}
+      {scanning && <ScanProgress status={scanStatus} scanType={scanType} />}
 
       {/* Scan Results */}
       {!scanning && latestResult && (
@@ -314,6 +475,113 @@ export default function Dashboard() {
       <div className="mt-8">
         <ActivityLog scans={scans} loading={scansLoading} showActivities={true} />
       </div>
+
+      {/* Confirmation Popup Modal */}
+      {confirmPopup && (
+        <>
+          {/* Overlay */}
+          <div 
+            className="fixed inset-0 bg-[#0a0a0f]/80 backdrop-blur-sm z-50"
+            onClick={() => handleConfirmation('cancel')}
+          />
+          
+          {/* Modal */}
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md mx-4">
+            <div className="bg-[#1a1a2e] border-2 border-[#FFA500] shadow-[0_0_30px_rgba(255,165,0,0.3)] relative">
+              {/* Top accent line */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#FFA500] via-[#f72585] to-[#FFA500]" />
+              
+              {/* Scanline overlay */}
+              <div className="absolute inset-0 pointer-events-none opacity-20 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,0,0,0.3)_2px,rgba(0,0,0,0.3)_4px)]" />
+              
+              <div className="relative p-6">
+                {/* Icon */}
+                <div className="flex justify-center mb-4">
+                  <div className="w-16 h-16 border-2 border-[#FFA500] bg-[#FFA500]/10 flex items-center justify-center">
+                    <span className="text-3xl">
+                      {confirmPopup.icon === 'info' && 'ℹ️'}
+                      {confirmPopup.icon === 'warning' && '⚠️'}
+                      {confirmPopup.icon === 'question' && '❓'}
+                      {!confirmPopup.icon && '📋'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Title */}
+                <h3 className="text-xl font-bold text-[#e8e8e8] text-center uppercase tracking-wide mb-3">
+                  {confirmPopup.title || 'Confirmation Required'}
+                </h3>
+
+                {/* Description */}
+                <p className="text-sm text-[#a0a0a0] text-center font-mono mb-6 leading-relaxed">
+                  <span className="text-[#666666]">&gt;</span> {confirmPopup.description || 'No new repositories were found since your last scan.'}
+                </p>
+
+                {/* Options */}
+                <div className="flex flex-col gap-3">
+                  {confirmPopup.options?.map((option) => (
+                    <button
+                      key={option.id}
+                      onClick={() => handleConfirmation(option.id)}
+                      className={`
+                        w-full p-4 border-2 transition-all font-bold uppercase tracking-wide text-sm
+                        ${option.id === 'continue_anyway' 
+                          ? 'border-[#39ff14] bg-[#39ff14]/10 text-[#39ff14] hover:bg-[#39ff14] hover:text-[#0a0a0f] hover:shadow-[0_0_15px_rgba(57,255,20,0.5)]' 
+                          : 'border-[#2a2a4a] bg-[#0a0a0f] text-[#666666] hover:border-[#ff3366] hover:text-[#ff3366]'
+                        }
+                      `}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        {option.id === 'continue_anyway' && <span>🚀</span>}
+                        {option.id === 'cancel' && <span>✕</span>}
+                        <span>{option.label}</span>
+                      </div>
+                      {option.description && (
+                        <p className="text-[10px] font-normal normal-case tracking-normal mt-1 opacity-70">
+                          {option.description}
+                        </p>
+                      )}
+                    </button>
+                  )) || (
+                    <>
+                      {/* Default buttons if options not provided */}
+                      <button
+                        onClick={() => handleConfirmation('continue_anyway')}
+                        className="w-full p-4 border-2 border-[#39ff14] bg-[#39ff14]/10 text-[#39ff14] font-bold uppercase tracking-wide text-sm hover:bg-[#39ff14] hover:text-[#0a0a0f] hover:shadow-[0_0_15px_rgba(57,255,20,0.5)] transition-all"
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          <span>🚀</span>
+                          <span>Continue Anyway</span>
+                        </div>
+                        <p className="text-[10px] font-normal normal-case tracking-normal mt-1 opacity-70">
+                          Scan existing repos and update portfolio
+                        </p>
+                      </button>
+                      <button
+                        onClick={() => handleConfirmation('cancel')}
+                        className="w-full p-4 border-2 border-[#2a2a4a] bg-[#0a0a0f] text-[#666666] font-bold uppercase tracking-wide text-sm hover:border-[#ff3366] hover:text-[#ff3366] transition-all"
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          <span>✕</span>
+                          <span>Cancel</span>
+                        </div>
+                        <p className="text-[10px] font-normal normal-case tracking-normal mt-1 opacity-70">
+                          Skip this scan
+                        </p>
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Footer hint */}
+                <p className="text-[10px] text-[#444455] font-mono text-center mt-4">
+                  // Press ESC or click outside to cancel
+                </p>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

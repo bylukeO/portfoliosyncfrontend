@@ -1,23 +1,30 @@
-export default function ScanProgress({ status = 'pending' }) {
+export default function ScanProgress({ status = 'pending', scanType = 'quick' }) {
   // Status can be: 'pending', 'processing', 'completed', 'failed'
+  // scanType can be: 'quick' or 'full'
+  
+  const isFullScan = scanType === 'full';
   
   const getStatusDisplay = () => {
     switch (status) {
       case 'pending':
         return {
-          icon: '⏳',
+          icon: isFullScan ? '🚀' : '⏳',
           color: 'text-[#FFA500]',
           bgColor: 'bg-[#FFA500]/20',
           borderColor: 'border-[#FFA500]',
-          message: 'Scan queued and waiting to start...',
+          message: isFullScan 
+            ? 'Full AI scan queued. Preparing Gemini analysis...'
+            : 'Scan queued and waiting to start...',
         };
       case 'processing':
         return {
-          icon: '⚙️',
-          color: 'text-[#3498DB]',
-          bgColor: 'bg-[#3498DB]/20',
-          borderColor: 'border-[#3498DB]',
-          message: 'Scanning repositories and analyzing code...',
+          icon: isFullScan ? '🤖' : '⚙️',
+          color: isFullScan ? 'text-[#f72585]' : 'text-[#3498DB]',
+          bgColor: isFullScan ? 'bg-[#f72585]/20' : 'bg-[#3498DB]/20',
+          borderColor: isFullScan ? 'border-[#f72585]' : 'border-[#3498DB]',
+          message: isFullScan 
+            ? 'AI analyzing repos, generating portfolio entries & creating PR...'
+            : 'Scanning repositories and analyzing code...',
         };
       case 'completed':
         return {
@@ -25,7 +32,9 @@ export default function ScanProgress({ status = 'pending' }) {
           color: 'text-[#2ECC71]',
           bgColor: 'bg-[#2ECC71]/20',
           borderColor: 'border-[#2ECC71]',
-          message: 'Scan completed successfully!',
+          message: isFullScan 
+            ? 'Full scan completed! Check your GitHub for the new PR.'
+            : 'Scan completed successfully!',
         };
       case 'failed':
         return {
@@ -33,15 +42,19 @@ export default function ScanProgress({ status = 'pending' }) {
           color: 'text-[#E74C3C]',
           bgColor: 'bg-[#E74C3C]/20',
           borderColor: 'border-[#E74C3C]',
-          message: 'Scan failed. Please try again.',
+          message: isFullScan 
+            ? 'Full scan failed. Check settings and try again.'
+            : 'Scan failed. Please try again.',
         };
       default:
         return {
-          icon: '⏳',
+          icon: isFullScan ? '🚀' : '⏳',
           color: 'text-[#FFA500]',
           bgColor: 'bg-[#FFA500]/20',
           borderColor: 'border-[#FFA500]',
-          message: 'Initializing scan...',
+          message: isFullScan 
+            ? 'Initializing AI-powered full scan...'
+            : 'Initializing scan...',
         };
     }
   };
