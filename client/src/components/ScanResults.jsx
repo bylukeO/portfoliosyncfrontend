@@ -16,13 +16,40 @@ export default function ScanResults({ scan, onPRCreated }) {
   const newRepos = scan.new_repos || [];
   const allProcessedRepos = scan.processed_repos || [];
   const skippedRepos = scan.skipped_repos || [];
-  const prUrls = scan.pr_urls || [];
+  const rawPrUrls = scan.pr_urls || [];
   const status = scan.status;
   const scanId = scan.id;
 
   // NEW: Track repos already added to portfolio
   const reposAddedToPR = scan.repos_added_to_pr || [];
   const alreadyUsedRepos = scan.already_used_repos || [];
+
+  // Parse PR URLs - handle both old format (array of strings) and new format (array of objects)
+  const prData = rawPrUrls.map((item) => {
+    // New format: PR object with metadata
+    if (typeof item === "object" && item.url) {
+      return {
+        url: item.url,
+        created_at: item.created_at,
+        repos_added: item.repos_added || [],
+        branch_name: item.branch_name,
+        repos_count: item.repos_count || item.repos_added?.length || 0,
+      };
+    }
+    // Old format: just URL string (backward compatibility)
+    if (typeof item === "string") {
+      return {
+        url: item,
+        created_at: null,
+        repos_added: [],
+        branch_name: null,
+        repos_count: 0,
+      };
+    }
+    return null;
+  }).filter(Boolean);
+
+  const prUrls = prData.map((pr) => pr.url); // For backward compatibility with existing code
 
   // Calculate remaining repos (exclude ones already added to PR)
   const processedRepos = allProcessedRepos.filter(
@@ -486,10 +513,10 @@ export default function ScanResults({ scan, onPRCreated }) {
         </div>
       )}
 
-      {/* PR Links */}
-      {prUrls.length > 0 && (
-        <div className="bg-[#1a1a2e] border-2 border-[#39ff14] p-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      {/* PR Links - Enhanced with metadata */}
+      {prData.length > 0 && (
+        <div className="bg-[#1a1a2e] border-2 border-[#39ff14] p-5">
+          <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-[#39ff14]/10 border-2 border-[#39ff14] flex items-center justify-center">
               <svg
                 className="w-5 h-5 text-[#39ff14]"
@@ -507,37 +534,94 @@ export default function ScanResults({ scan, onPRCreated }) {
             </div>
             <div>
               <p className="text-sm font-medium text-[#39ff14] uppercase tracking-wide">
-                Pull Request{prUrls.length > 1 ? "s" : ""} Created
+                {prData.length} Pull Request{prData.length > 1 ? "s" : ""} Created
               </p>
               <p className="text-xs text-[#666666] mt-0.5 font-mono">
-                Review and merge to update your portfolio
+                {reposAddedToPR.length} repo{reposAddedToPR.length !== 1 ? "s" : ""} added to portfolio
               </p>
             </div>
           </div>
-          <div className="flex flex-col gap-2">
-            {prUrls.map((url, index) => (
-              <a
-                key={url}
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-[#39ff14]/10 hover:bg-[#39ff14]/20 text-[#39ff14] border border-[#39ff14] text-sm font-medium uppercase tracking-wide transition-all"
+          
+          {/* PR Cards */}
+          <div className="space-y-3">
+            {prData.map((pr, index) => (
+              <div
+                key={pr.url}
+                className="bg-[#16162a] border border-[#39ff14]/30 p-4"
               >
-                Open PR {prUrls.length > 1 ? `#${index + 1}` : ""}
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="square"
-                    strokeLinejoin="miter"
-                    d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
-                  />
-                </svg>
-              </a>
+                <div className="flex items-start justify-between gap-3">
+                  {/* PR Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xs font-mono bg-[#39ff14]/10 text-[#39ff14] px-2 py-1 border border-[#39ff14]">
+                        PR #{index + 1}
+                      </span>
+                      {pr.repos_count > 0 && (
+                        <span className="text-xs font-mono text-[#666666]">
+                          {pr.repos_count} repo{pr.repos_count !== 1 ? "s" : ""}
+                        </span>
+                      )}
+                      {pr.created_at && (
+                        <span className="text-xs font-mono text-[#666666]">
+                          {new Date(pr.created_at).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                    
+                    {/* Branch name */}
+                    {pr.branch_name && (
+                      <p className="text-xs font-mono text-[#888888] mb-2 truncate">
+                        <span className="text-[#666666]">Branch:</span> {pr.branch_name}
+                      </p>
+                    )}
+                    
+                    {/* Repos added in this PR */}
+                    {pr.repos_added.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-xs text-[#666666] mb-1 font-mono">Repositories:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {pr.repos_added.slice(0, 3).map((repoName) => (
+                            <span
+                              key={repoName}
+                              className="text-xs bg-[#2a2a4a] px-2 py-1 text-[#a0a0a0] font-mono"
+                            >
+                              {repoName.split("/")[1] || repoName}
+                            </span>
+                          ))}
+                          {pr.repos_added.length > 3 && (
+                            <span className="text-xs bg-[#2a2a4a] px-2 py-1 text-[#666666] font-mono">
+                              +{pr.repos_added.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Open PR Button */}
+                  <a
+                    href={pr.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-[#39ff14]/10 hover:bg-[#39ff14]/20 text-[#39ff14] border border-[#39ff14] text-xs font-medium uppercase tracking-wide transition-all"
+                  >
+                    Open
+                    <svg
+                      className="w-3 h-3"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="square"
+                        strokeLinejoin="miter"
+                        d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+                      />
+                    </svg>
+                  </a>
+                </div>
+              </div>
             ))}
           </div>
         </div>

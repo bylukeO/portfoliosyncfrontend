@@ -20,6 +20,19 @@ export default function Dashboard() {
   const [scanStatus, setScanStatus] = useState(null); // 'pending', 'processing', 'completed', 'failed'
   const [confirmPopup, setConfirmPopup] = useState(null); // For full scan confirmation
   const pollingIntervalRef = useRef(null);
+  
+  // NEW: State for accurate PR tracking and activity feed
+  const [prStats, setPrStats] = useState({
+    totalPRs: 0,
+    totalScansWithPRs: 0,
+    loading: true
+  });
+  const [portfolioStats, setPortfolioStats] = useState({
+    totalRepos: 0,
+    loading: true
+  });
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [activityLoading, setActivityLoading] = useState(true);
 
   // Fetch all scans
   const fetchScans = useCallback(async () => {
@@ -43,6 +56,65 @@ export default function Dashboard() {
       setScansLoading(false);
     }
   }, [scanning]);
+  
+  // NEW: Fetch accurate PR statistics
+  const fetchPRStats = useCallback(async () => {
+    try {
+      const { data } = await api.get('/user/prs');
+      setPrStats({
+        totalPRs: data.total_prs || 0,
+        totalScansWithPRs: data.total_scans_with_prs || 0,
+        loading: false
+      });
+    } catch (error) {
+      console.error('Error fetching PR stats:', error);
+      // Fall back to calculating from scans if endpoint doesn't exist
+      const totalPRs = scans.reduce((sum, scan) => {
+        const prUrls = scan.pr_urls || [];
+        return sum + prUrls.length;
+      }, 0);
+      setPrStats({
+        totalPRs,
+        totalScansWithPRs: scans.filter(s => s.pr_urls && s.pr_urls.length > 0).length,
+        loading: false
+      });
+    }
+  }, [scans]);
+  
+  // NEW: Fetch portfolio repository statistics
+  const fetchPortfolioStats = useCallback(async () => {
+    try {
+      const { data } = await api.get('/user/portfolio-repos');
+      setPortfolioStats({
+        totalRepos: data.total_repos || 0,
+        loading: false
+      });
+    } catch (error) {
+      console.error('Error fetching portfolio stats:', error);
+      // Fall back to calculating from scan data
+      const reposAddedSet = new Set();
+      scans.forEach(scan => {
+        const reposAdded = scan.repos_added_to_pr || [];
+        reposAdded.forEach(repo => reposAddedSet.add(repo));
+      });
+      setPortfolioStats({
+        totalRepos: reposAddedSet.size,
+        loading: false
+      });
+    }
+  }, [scans]);
+  
+  // NEW: Fetch recent activity
+  const fetchActivity = useCallback(async () => {
+    try {
+      const { data } = await api.get('/activity?limit=10');
+      setRecentActivity(data.activities || []);
+      setActivityLoading(false);
+    } catch (error) {
+      console.error('Error fetching activity:', error);
+      setActivityLoading(false);
+    }
+  }, []);
 
   // Poll scan status
   const pollScanStatus = useCallback(async (scanId) => {
@@ -139,6 +211,19 @@ export default function Dashboard() {
   useEffect(() => {
     fetchScans();
   }, [fetchScans]);
+  
+  // NEW: Fetch tracking data when scans are loaded
+  useEffect(() => {
+    if (scans.length > 0 && !scansLoading) {
+      fetchPRStats();
+      fetchPortfolioStats();
+    }
+  }, [scans, scansLoading, fetchPRStats, fetchPortfolioStats]);
+  
+  // NEW: Fetch activity feed on mount
+  useEffect(() => {
+    fetchActivity();
+  }, [fetchActivity]);
 
   // Run scan (supports both quick and full scan)
   const runScan = async (type = 'quick', forceContinue = false) => {
@@ -271,6 +356,11 @@ export default function Dashboard() {
     // Refresh scans to show updated status
     await fetchScans();
     
+    // NEW: Refresh tracking data after PR creation
+    await fetchPRStats();
+    await fetchPortfolioStats();
+    await fetchActivity();
+    
     // If there's a PR URL, show it
     if (prData.pr_url) {
       toast(`🔗 View PR: ${prData.pr_url}`, 'info');
@@ -306,7 +396,8 @@ export default function Dashboard() {
     completedScans: scans.filter(s => s.status === 'completed').length,
     failedScans: scans.filter(s => s.status === 'failed').length,
     processingScans: scans.filter(s => s.status === 'processing' || s.status === 'pending').length,
-    totalPRs: scans.reduce((sum, scan) => sum + (scan.pr_urls?.length || 0), 0),
+    // NEW: Use accurate PR count from tracking endpoint
+    totalPRs: prStats.loading ? scans.reduce((sum, scan) => sum + (scan.pr_urls?.length || 0), 0) : prStats.totalPRs,
   };
 
   // Get current status
@@ -474,7 +565,14 @@ export default function Dashboard() {
             </div>
             <div>
               <div className="text-[10px] text-[#666666] uppercase tracking-widest">PRs Created</div>
-              <div className="text-xl font-bold text-[#f72585]">{stats.totalPRs}</div>
+              <div className="flex items-baseline gap-2">
+                <div className="text-xl font-bold text-[#f72585]">{stats.totalPRs}</div>
+                {!prStats.loading && prStats.totalScansWithPRs > 0 && (
+                  <div className="text-[10px] text-[#666666] font-mono">
+                    from {prStats.totalScansWithPRs} {prStats.totalScansWithPRs === 1 ? 'scan' : 'scans'}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </Card>
@@ -533,6 +631,69 @@ export default function Dashboard() {
 
       {/* Scan Progress */}
       {scanning && <ScanProgress status={scanStatus} scanType={scanType} />}
+      
+      {/* NEW: Recent Activity Feed */}
+      {!scanning && recentActivity.length > 0 && (
+        <div className="mb-8">
+          <div className="text-xs font-bold text-[#666666] uppercase tracking-widest mb-4 flex items-center gap-2">
+            <span className="text-[#4cc9f0]">//</span>
+            Recent Activity
+          </div>
+          <div className="bg-[#1a1a2e] border-2 border-[#2a2a4a] overflow-hidden">
+            <div className="max-h-64 overflow-y-auto">
+              {activityLoading ? (
+                <div className="p-4 text-center text-[#666666] font-mono text-sm">
+                  Loading activity...
+                </div>
+              ) : (
+                <div className="divide-y divide-[#2a2a4a]">
+                  {recentActivity.map((activity, idx) => {
+                    // Map event types to icons and colors
+                    const eventConfig = {
+                      scan_started: { icon: '▶', color: 'text-[#4cc9f0]', label: 'Scan Started' },
+                      scan_completed: { icon: '✓', color: 'text-[#39ff14]', label: 'Scan Completed' },
+                      scan_failed: { icon: '✕', color: 'text-[#ff3366]', label: 'Scan Failed' },
+                      baseline_created: { icon: '★', color: 'text-[#FFA500]', label: 'Baseline Created' },
+                      new_repo_detected: { icon: '+', color: 'text-[#4cc9f0]', label: 'New Repo Found' },
+                      readme_quality_passed: { icon: '✓', color: 'text-[#39ff14]', label: 'README Passed' },
+                      readme_quality_failed: { icon: '✕', color: 'text-[#ff3366]', label: 'README Failed' },
+                      pr_created: { icon: '◆', color: 'text-[#f72585]', label: 'PR Created' },
+                      pr_failed: { icon: '✕', color: 'text-[#ff3366]', label: 'PR Failed' }
+                    }[activity.event_type] || { icon: '•', color: 'text-[#666666]', label: activity.event_type };
+
+                    return (
+                      <div key={idx} className="p-3 hover:bg-[#0a0a0f]/30 transition-colors">
+                        <div className="flex items-start gap-3">
+                          <div className={`w-6 h-6 border border-current ${eventConfig.color} bg-current/10 flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                            <span className="text-xs">{eventConfig.icon}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1">
+                                <p className="text-sm text-[#e8e8e8] font-mono">
+                                  {eventConfig.label}
+                                </p>
+                                {activity.message && (
+                                  <p className="text-xs text-[#666666] mt-1 font-mono">
+                                    {activity.message}
+                                  </p>
+                                )}
+                              </div>
+                              <span className="text-[10px] text-[#666666] font-mono whitespace-nowrap">
+                                {new Date(activity.created_at).toLocaleTimeString()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Repo Selection UI (for awaiting_selection status) */}
       {!scanning && latestResult && latestResult.status === 'awaiting_selection' && (
