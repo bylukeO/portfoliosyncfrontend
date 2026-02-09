@@ -8,6 +8,7 @@ export default function ActivityLog() {
     const [error, setError] = useState(null);
     const [filter, setFilter] = useState('all'); // all, completed, failed, pending, processing
     const [expandedIds, setExpandedIds] = useState(new Set());
+    const [prStats, setPrStats] = useState({ totalPRs: 0, loading: true });
 
     // Fetch scans from correct API endpoint
     const fetchScans = useCallback(async () => {
@@ -24,10 +25,32 @@ export default function ActivityLog() {
             setLoading(false);
         }
     }, []);
+    
+    // Fetch accurate PR statistics
+    const fetchPRStats = useCallback(async () => {
+        try {
+            const { data } = await api.get('/user/prs');
+            setPrStats({ totalPRs: data.total_prs || 0, loading: false });
+        } catch (error) {
+            console.error('Error fetching PR stats:', error);
+            // Fallback to calculating from scans
+            const totalPRs = scans.reduce((sum, scan) => {
+                const prUrls = scan.pr_urls || [];
+                return sum + prUrls.length;
+            }, 0);
+            setPrStats({ totalPRs, loading: false });
+        }
+    }, [scans]);
 
     useEffect(() => {
         fetchScans();
     }, [fetchScans]);
+    
+    useEffect(() => {
+        if (scans.length > 0) {
+            fetchPRStats();
+        }
+    }, [scans, fetchPRStats]);
 
     const toggleExpand = (id) => {
         setExpandedIds(prev => {
@@ -65,7 +88,8 @@ export default function ActivityLog() {
         pending: scans.filter(s => s.status === 'pending' || s.status === 'processing').length,
         totalRepos: scans.reduce((sum, s) => sum + (s.new_repos?.length || 0), 0),
         totalProcessed: scans.reduce((sum, s) => sum + (s.processed_repos?.length || 0), 0),
-        totalPRs: scans.reduce((sum, s) => sum + (s.pr_urls?.length || 0), 0),
+        // Use accurate PR count from tracking endpoint
+        totalPRs: prStats.loading ? scans.reduce((sum, s) => sum + (s.pr_urls?.length || 0), 0) : prStats.totalPRs,
     };
 
     // Get status color

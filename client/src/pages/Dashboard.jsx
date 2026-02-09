@@ -402,9 +402,24 @@ export default function Dashboard() {
 
   // Get current status
   const getCurrentStatus = () => {
+    // If actively scanning, show Scanning status
     if (scanning) return { label: 'Scanning', color: 'text-[#4cc9f0]', pulse: true };
-    if (stats.processingScans > 0) return { label: 'Processing', color: 'text-[#FFA500]', pulse: true };
+    
+    // Check if there are scans currently processing (not historical ones)
+    // Only show Processing if there's a scan with status 'processing' or 'pending' that was started recently (within last 10 minutes)
+    const now = new Date();
+    const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000);
+    const activelyProcessing = scans.some(s => {
+      const scanDate = new Date(s.created_at || s.scanned_at);
+      return (s.status === 'processing' || s.status === 'pending') && scanDate > tenMinutesAgo;
+    });
+    
+    if (activelyProcessing) return { label: 'Processing', color: 'text-[#FFA500]', pulse: true };
+    
+    // If there are recent failures and no completed scans, show Error
     if (stats.failedScans > 0 && stats.completedScans === 0) return { label: 'Error', color: 'text-[#ff3366]', pulse: false };
+    
+    // Default: Online (system is ready, no active operations)
     return { label: 'Online', color: 'text-[#39ff14]', pulse: false };
   };
 
