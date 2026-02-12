@@ -11,6 +11,8 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import AuthCallback from './pages/AuthCallback';
 import AuthError from './pages/AuthError';
+import LearnMore from './pages/LearnMore';
+import Documentation from './pages/Documentation';
 
 function App() {
   return (
@@ -19,6 +21,8 @@ function App() {
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<Landing />} />
+          <Route path="/learn-more" element={<LearnMore />} />
+          <Route path="/docs" element={<Documentation />} />
           <Route path="/login" element={<Login />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/auth/error" element={<AuthError />} />

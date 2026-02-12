@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Card, Badge } from '../components/ui';
 
@@ -54,6 +54,80 @@ function ShieldIcon({ className }) {
     );
 }
 
+const WaitlistForm = ({ className = "" }) => {
+    const [email, setEmail] = useState("");
+    const [status, setStatus] = useState("idle");
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!email) return;
+
+        setStatus("loading");
+
+        // TODO: Connect this to your backend or Google Sheets
+        console.log("WAITLIST_LEAD:", email);
+
+        setTimeout(() => {
+            setStatus("success");
+            setEmail("");
+        }, 1500);
+    };
+
+    if (status === "success") {
+        return (
+            <div className={`p-6 bg-[#0f0f23] border border-[#39ff14] relative overflow-hidden group ${className}`}>
+                <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent,rgba(57,255,20,0.1),transparent)] opacity-20" />
+                <div className="relative z-10">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="w-2 h-2 bg-[#39ff14] rounded-full animate-pulse shadow-[0_0_10px_#39ff14]" />
+                        <span className="text-[#39ff14] font-bold tracking-widest uppercase text-sm">Access Requested</span>
+                    </div>
+                    <p className="text-[#a0a0a0] text-sm leading-relaxed">
+                        You've been added to the priority queue. We'll verify your GitHub profile and send an invite code shortly.
+                    </p>
+                    <button
+                        onClick={() => setStatus("idle")}
+                        className="mt-4 text-[10px] text-[#666666] hover:text-[#e8e8e8] uppercase tracking-wider transition-colors"
+                    >
+                        // Add another email
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <form onSubmit={handleSubmit} className={`w-full max-w-md ${className}`}>
+            <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex-grow relative group">
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#f72585] to-[#4cc9f0] opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-lg rounded-lg" />
+                    <input
+                        type="email"
+                        placeholder="ENTER EMAIL ADDRESS..."
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="relative z-10 w-full px-6 py-4 bg-[#0a0a0f] border-2 border-[#2a2a4a] text-[#e8e8e8] placeholder:text-[#666666] focus:border-[#f72585] focus:outline-none focus:shadow-[0_0_20px_rgba(247,37,133,0.2)] transition-all font-mono text-sm"
+                        required
+                        disabled={status === "loading"}
+                    />
+                </div>
+                <Button
+                    type="submit"
+                    variant="primary"
+                    glow
+                    disabled={status === "loading"}
+                    className="whitespace-nowrap px-8 py-4"
+                >
+                    {status === "loading" ? "PROCESSING..." : "JOIN WAITLIST"}
+                </Button>
+            </div>
+            <p className="mt-4 text-[10px] text-[#666666] font-mono uppercase tracking-widest pl-1">
+                // Limited Spots Available for Beta v1.0
+            </p>
+        </form>
+    );
+};
+
 export default function Landing() {
     const scrollToFeatures = () => {
         document.getElementById('features').scrollIntoView({ behavior: 'smooth' });
@@ -87,12 +161,13 @@ export default function Landing() {
                     </span>
                 </div>
                 <div className="flex items-center gap-2 md:gap-4">
-                    <Link to="/login">
-                        <Button variant="ghost" className="inline-flex">LOGIN</Button>
-                    </Link>
-                    <Link to="/register">
-                        <Button variant="primary" glow>START FREE</Button>
-                    </Link>
+                    {/* Hidden Login for Admin/Early Access */}
+                    {/* <Link to="/login" className="opacity-0 hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" className="inline-flex text-[10px]">ADMIN</Button>
+                    </Link> */}
+                    <div className="px-3 py-1 border border-[#f72585] bg-[rgba(247,37,133,0.1)] text-[#f72585] text-[10px] font-bold uppercase tracking-widest shadow-[0_0_10px_rgba(247,37,133,0.3)] animate-pulse">
+                        Private Beta
+                    </div>
                 </div>
             </nav>
 
@@ -117,15 +192,8 @@ export default function Landing() {
                             Automatically detect changes in your GitHub repositories and update your portfolio site in real-time. No more manual updates.
                         </p>
 
-                        <div className="flex flex-col sm:flex-row gap-4">
-                            <Link to="/register">
-                                <Button size="lg" variant="primary" className="w-full sm:w-auto">
-                                    GET STARTED FREE
-                                </Button>
-                            </Link>
-                            <Button size="lg" variant="secondary" onClick={scrollToFeatures} className="w-full sm:w-auto">
-                                LEARN MORE
-                            </Button>
+                        <div className="flex flex-col gap-6">
+                            <WaitlistForm />
                         </div>
 
                         {/* Tech stack indicators */}
@@ -258,16 +326,14 @@ export default function Landing() {
                         <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent,rgba(247,37,133,0.05),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-700 transform translate-x-[-100%] group-hover:translate-x-[100%]" />
 
                         <h2 className="text-4xl font-bold text-[#e8e8e8] uppercase tracking-wide mb-6">
-                            Ready to Sync?
+                            Secure Your Access
                         </h2>
                         <p className="text-xl text-[#a0a0a0] mb-10 max-w-xl mx-auto">
-                            Join thousands of developers who have automated their portfolio maintenance.
+                            Join the private beta and be among the first to experience automated portfolio synchronization.
                         </p>
-                        <Link to="/register">
-                            <Button size="lg" variant="primary" className="animate-bounce-subtle">
-                                GET STARTED NOW
-                            </Button>
-                        </Link>
+                        <div className="flex justify-center">
+                            <WaitlistForm className="max-w-lg mx-auto" />
+                        </div>
                     </div>
                 </div>
             </section>
@@ -287,9 +353,9 @@ export default function Landing() {
                     </div>
 
                     <div className="flex flex-wrap justify-center gap-4 md:gap-8 text-sm font-bold uppercase tracking-widest text-[#a0a0a0]">
-                        <a href="#" className="hover:text-[#f72585] transition-colors">Features</a>
-                        <a href="#" className="hover:text-[#f72585] transition-colors">Pricing</a>
-                        <a href="#" className="hover:text-[#f72585] transition-colors">Documentation</a>
+                        <a href="#features" className="hover:text-[#f72585] transition-colors">Features</a>
+                        <Link to="/learn-more" className="hover:text-[#f72585] transition-colors">Learn More</Link>
+                        <Link to="/docs" className="hover:text-[#f72585] transition-colors">Documentation</Link>
                         <Link to="/login" className="hover:text-[#f72585] transition-colors">Login</Link>
                     </div>
                 </div>
